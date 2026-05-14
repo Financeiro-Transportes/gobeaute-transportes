@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  GOBEAUTE · FORMULÁRIO DE TRANSPORTES                         ║
+  ╠═══════════════════════════════════════════════════════════╣
+  ║  CONFIGURE: cole a URL do Apps Script Web App abaixo     ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gobeaute · Pesquisa de Transportes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & VARS ─────────────────────────────────────────── */
+:root {
+  --gold: #C9A84C; --gold-l: #E8C96A; --gold-dim: rgba(201,168,76,.12); --gold-b: rgba(201,168,76,.3);
+  --bg: #0C0D0F; --s1: #141518; --s2: #1B1D22; --s3: #23262E;
+  --border: rgba(255,255,255,.08); --text: #F0EDE8; --muted: #7A7880; --dim: #3C3A42;
+  --red: #E05252; --yellow: #E0A832; --green: #52B788;
+  --radius: 12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  /* grain texture */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+::selection{background:var(--gold-dim);color:var(--gold)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 32px 0;
+  background:linear-gradient(var(--bg),transparent);
+  display:flex;flex-direction:column;gap:14px;
+}
+.header-row{display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);letter-spacing:.3px}
+.step-label{font-size:11.5px;color:var(--muted);letter-spacing:.5px}
+.step-label b{color:var(--text)}
+.progress-track{height:2px;background:var(--s3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-l));border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.shell{
+  max-width:660px;
+  margin:0 auto;
+  padding:100px 24px 80px;
+  min-height:100vh;
+}
+
+/* ── STEPS ─────────────────────────────────────────────── */
+.step{display:none}
+.step.active{display:block;animation:stepIn .38s cubic-bezier(.25,.46,.45,.94) both}
+.step.back{animation:stepBack .38s cubic-bezier(.25,.46,.45,.94) both}
+@keyframes stepIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes stepBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+
+.step-eyebrow{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);font-weight:700;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.step-eyebrow::before{content:'';display:inline-block;width:20px;height:1px;background:var(--gold)}
+.step-title{font-family:'DM Serif Display',serif;font-size:32px;line-height:1.15;margin-bottom:8px;color:var(--text)}
+.step-title em{color:var(--gold);font-style:normal}
+.step-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:36px;max-width:520px}
+
+/* ── FORM ELEMENTS ─────────────────────────────────────── */
+.field{margin-bottom:22px}
+.field-label{
+  display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:9px;
+}
+.field-label .req{color:var(--gold);margin-left:3px}
+
+.input{
+  width:100%;background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  font-size:15px;color:var(--text);
+  outline:none;transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;
+}
+.input:focus{border-color:var(--gold-b);box-shadow:0 0 0 3px var(--gold-dim)}
+.input::placeholder{color:var(--dim)}
+.input.error{border-color:rgba(224,82,82,.5);box-shadow:0 0 0 3px rgba(224,82,82,.1)}
+
+select.input{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A7880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:36px;cursor:pointer;
+}
+select.input option{background:var(--s2);color:var(--text)}
+
+textarea.input{resize:vertical;min-height:110px;line-height:1.6}
+
+.field-hint{font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.5}
+.field-error{font-size:11.5px;color:var(--red);margin-top:6px;display:none}
+.field.has-error .field-error{display:block}
+.field.has-error .input{border-color:rgba(224,82,82,.5)}
+
+/* ── PILL MULTI-SELECT ─────────────────────────────────── */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:100px;
+  background:var(--s2);border:1px solid var(--border);
+  font-size:13.5px;font-weight:500;color:var(--muted);
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.pill:hover{border-color:var(--gold-b);color:var(--text)}
+.pill.selected{background:var(--gold-dim);border-color:var(--gold-b);color:var(--gold);font-weight:600}
+.pill-check{font-size:11px;opacity:0;transition:opacity .15s}
+.pill.selected .pill-check{opacity:1}
+/* Compact pills for long lists */
+.pills-compact .pill{padding:6px 12px;font-size:12.5px}
+
+/* ── OPTION CARDS ──────────────────────────────────────── */
+.option-cards{display:grid;gap:10px}
+.option-cards.cols-2{grid-template-columns:1fr 1fr}
+.option-cards.cols-3{grid-template-columns:1fr 1fr 1fr}
+.option-card{
+  padding:16px 18px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--radius);cursor:pointer;
+  transition:all .15s;user-select:none;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.option-card:hover{border-color:var(--gold-b);background:var(--s3)}
+.option-card.selected{background:var(--gold-dim);border-color:var(--gold-b)}
+.oc-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.oc-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.oc-desc{font-size:12px;color:var(--muted);line-height:1.45}
+.option-card.selected .oc-title{color:var(--gold)}
+
+/* Urgência variants */
+.option-card[data-val="Crítico"].selected{background:rgba(224,82,82,.1);border-color:rgba(224,82,82,.4)}
+.option-card[data-val="Crítico"].selected .oc-title{color:var(--red)}
+.option-card[data-val="Alto"].selected{background:rgba(224,168,50,.1);border-color:rgba(224,168,50,.4)}
+.option-card[data-val="Alto"].selected .oc-title{color:var(--yellow)}
+.option-card[data-val="Médio"].selected{background:rgba(82,148,224,.1);border-color:rgba(82,148,224,.4)}
+.option-card[data-val="Médio"].selected .oc-title{color:#5294E0}
+.option-card[data-val="Baixo"].selected{background:rgba(82,183,136,.1);border-color:rgba(82,183,136,.4)}
+.option-card[data-val="Baixo"].selected .oc-title{color:var(--green)}
+
+/* ── STAR RATING ───────────────────────────────────────── */
+.stars-wrap{display:flex;gap:10px;margin-top:6px}
+.star-btn{
+  font-size:36px;background:none;border:none;color:var(--dim);
+  cursor:pointer;transition:all .15s;line-height:1;
+  -webkit-text-stroke:.5px var(--dim);
+}
+.star-btn.lit{color:var(--gold);-webkit-text-stroke:.5px var(--gold);transform:scale(1.1)}
+.star-btn:hover{transform:scale(1.15)}
+.stars-label{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* ── REGION CARDS ──────────────────────────────────────── */
+.regions-stack{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.region-card{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  animation:cardIn .3s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.rc-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--s3);
+}
+.rc-num{
+  display:flex;align-items:center;gap:10px;
+  font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);
+}
+.rc-num-badge{
+  width:22px;height:22px;border-radius:6px;
+  background:var(--gold-dim);border:1px solid var(--gold-b);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Serif Display',serif;font-size:13px;color:var(--gold);
+}
+.rc-gap{
+  display:none;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;
+}
+.rc-gap.show{display:flex}
+.rc-gap.g-red{background:rgba(224,82,82,.15);color:var(--red)}
+.rc-gap.g-yellow{background:rgba(224,168,50,.15);color:var(--yellow)}
+.rc-gap.g-green{background:rgba(82,183,136,.15);color:var(--green)}
+.rc-remove{
+  background:none;border:none;color:var(--dim);font-size:16px;
+  width:28px;height:28px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.rc-remove:hover{background:rgba(224,82,82,.12);color:var(--red)}
+.rc-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rc-body .field{margin-bottom:0}
+.rc-body .field.full{grid-column:1/-1}
+
+@media(max-width:540px){.rc-body{grid-template-columns:1fr}.rc-body .field.full{grid-column:1}}
+
+.add-region-btn{
+  width:100%;padding:14px;
+  background:transparent;border:1.5px dashed var(--dim);
+  border-radius:14px;color:var(--muted);
+  font-size:13.5px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .18s;
+}
+.add-region-btn:hover{border-color:var(--gold-b);color:var(--gold);background:var(--gold-dim)}
+
+/* ── NAVIGATION ────────────────────────────────────────── */
+.nav-row{display:flex;align-items:center;justify-content:space-between;margin-top:36px}
+.btn-back{
+  background:none;border:none;color:var(--muted);font-size:14px;font-weight:500;
+  display:flex;align-items:center;gap:7px;padding:8px 0;
+  transition:color .15s;
+}
+.btn-back:hover{color:var(--text)}
+.btn-next{
+  background:var(--gold);color:#0C0D0F;
+  border:none;border-radius:10px;
+  padding:14px 28px;font-size:15px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+  transition:all .18s;letter-spacing:.2px;
+}
+.btn-next:hover{background:var(--gold-l);transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,.25)}
+.btn-next:active{transform:translateY(0)}
+.btn-next:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── LOADING OVERLAY ────────────────────────────────────── */
+#overlay{
+  position:fixed;inset:0;background:rgba(12,13,15,.85);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#overlay.show{opacity:1;pointer-events:all}
+.spin{
+  width:44px;height:44px;border:3px solid var(--s3);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.overlay-text{font-family:'DM Serif Display',serif;font-size:18px;color:var(--muted)}
+
+/* ── SUCCESS SCREEN ─────────────────────────────────────── */
+#success{
+  display:none;text-align:center;
+  padding:60px 24px;
+  animation:stepIn .5s ease both;
+}
+#success.show{display:block}
+.success-icon{
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(82,183,136,.15);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;margin:0 auto 24px;
+  animation:pop .5s cubic-bezier(.34,1.56,.64,1) .2s both;
+}
+@keyframes pop{from{scale:0;opacity:0}to{scale:1;opacity:1}}
+.success-title{font-family:'DM Serif Display',serif;font-size:30px;margin-bottom:10px}
+.success-title em{color:var(--gold);font-style:normal}
+.success-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:36px;max-width:420px;margin-left:auto;margin-right:auto}
+.success-summary{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:14px;padding:20px 24px;
+  text-align:left;margin-bottom:28px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.ss-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.ss-label{color:var(--muted)}
+.ss-val{font-weight:600;color:var(--text)}
+.btn-reset{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 24px;
+  font-size:14px;font-weight:600;color:var(--muted);
+  transition:all .15s;
+}
+.btn-reset:hover{border-color:var(--gold-b);color:var(--gold)}
+
+/* ── DIVIDER ────────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);margin:28px 0}
+.section-mini{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:14px}
+
+/* ── CONDITIONAL FIELD ─────────────────────────────────── */
+.conditional{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.conditional.open{max-height:200px}
+
+/* ── CHAR COUNTER ───────────────────────────────────────── */
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-top:5px}
+.char-count.warn{color:var(--yellow)}
+
+@media(max-width:480px){
+  .shell{padding:88px 16px 60px}
+  .step-title{font-size:26px}
+  .option-cards.cols-2,.option-cards.cols-3{grid-template-columns:1fr}
+  .header{padding:16px 20px 0}
+  .btn-next{padding:12px 22px;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER FIXO ═══ -->
+<header class="header">
+  <div class="header-row">
+    <div class="logo">Gobeaute</div>
+    <div class="step-label"><b id="s-cur">1</b> de 5 etapas</div>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="prog" style="width:20%"></div>
+  </div>
+</header>
+
+<!-- ═══ LOADING ═══ -->
+<div id="overlay">
+  <div class="spin"></div>
+  <div class="overlay-text">Enviando sua resposta…</div>
+</div>
+
+<!-- ═══ SHELL ═══ -->
+<div class="shell">
+
+  <!-- ═══ SUCESSO ═══ -->
+  <div id="success">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Resposta <em>enviada!</em></div>
+    <div class="success-desc">Obrigado. Sua contribuição ajuda a priorizar melhorias reais na área de Transportes Gobeaute.</div>
+    <div class="success-summary" id="ss-body"></div>
+    <button class="btn-reset" onclick="resetForm()">Preencher para outra região →</button>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ETAPA 1 — IDENTIFICAÇÃO
+  ════════════════════════════════════ -->
+  <div class="step active" id="step-1">
+    <div class="step-eyebrow">Etapa 1</div>
+    <h1 class="step-title">Olá,<br>vamos <em>começar.</em></h1>
+    <p class="step-desc">Suas respostas ajudam a mapear onde a Gobeaute perde competitividade na área de transportes frente ao mercado.</p>
+
+    <div class="field" id="f-nome">
+      <label class="field-label">Seu nome completo <span class="req">*</span></label>
+      <input class="input" type="text" id="nome" placeholder="Ex.: Ana Beatriz Cavalcante" autocomplete="name">
+      <div class="field-error">Por favor, informe seu nome.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Marcas que você representa <span class="req">*</span></label>
+      <div class="pills" id="marcas-pills">
+        <div class="pill" data-group="marcas" data-val="Gobeaute" onclick="togglePill(this)"><span class="pill-check">✓</span> Gobeaute</div>
+        <div class="pill" data-group="marcas" data-val="Ápice" onclick="togglePill(this)"><span class="pill-check">✓</span> Ápice</div>
+        <div class="pill" data-group="marcas" data-val="Barbours" onclick="togglePill(this)"><span class="pill-check">✓</span> Barbours</div>
+        <div class="pill" data-group="marcas" data-val="Lescent" onclick="togglePill(this)"><span class="pill-check">✓</span> Lescent</div>
+        <div class="pill" data-group="marcas" data-val="Kokeshi" onclick="togglePill(this)"><span class="pill-check">✓</span> Kokeshi</div>
+	<div class="pill" data-group="marcas" data-val="Aua" onclick="togglePill(this)"><span class="pill-check">✓</span> Aua</div>
+	<div class="pill" data-group="marcas" data-val="Rituária" onclick="togglePill(this)"><span class="pill-check">✓</span> Rituária</div>
+	<div class="pill" data-group="marcas" data-val="By Samia" onclick="togglePill(this)"><span class="pill-check">✓</span> By Samia</div>
+        <div class="pill" data-group="marcas" data-val="Outra"      onclick="togglePill(this)" id="pill-outra-marca"><span class="pill-check">✓</span> Outra</div>
+      </div>
+      <div class="conditional" id="cond-outra-marca" style="margin-top:10px">
+        <input class="input" type="text" id="outra-marca-text" placeholder="Nome da marca…">
+      </div>
+      <div class="field-error" id="err-marcas">Selecione ao menos uma marca.</div>
+    </div>
+
+    <div class="nav-row">
+      <div></div>
+      <button class="btn-next" onclick="next(1)">Próximo <span>→</span></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ETAPA 2 — BENCHMARK
+  ════════════════════════════════════ -->
+  <div class="step" id="step-2">
+    <div class="step-eyebrow">Etapa 2</div>
+    <h1 class="step-title">Compare os <em>prazos</em><br>na sua região.</h1>
+    <p class="step-desc">Para cada estado que você atende, informe o prazo da Gobeaute e do principal concorrente. O gap aparece automaticamente.</p>
+
+    <div class="regions-stack" id="regions-stack"></div>
+
+    <button class="add-region-btn" onclick="addRegion()">
+      <span style="font-size:18px">+</span> Adicionar outra região
+    </button>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(2)">← Voltar</button>
+      <button class="btn-next" onclick="next(2)">Próximo <span>→</span></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ETAPA 3 — METODOLOGIA
+  ════════════════════════════════════ -->
+  <div class="step" id="step-3">
+    <div class="step-eyebrow">Etapa 3</div>
+    <h1 class="step-title">Como você <em>calcula</em><br>o prazo hoje?</h1>
+    <p class="step-desc">Queremos entender se os vendedores têm ferramentas confiáveis para informar o prazo ao cliente antes de fechar o pedido.</p>
+
+    <div class="option-cards" id="calc-cards">
+      <div class="option-card" data-group="calc" data-val="Sistema ERP" onclick="selectCard(this,'calc')">
+        <div class="oc-icon">💻</div><div><div class="oc-title">Sistema ERP</div><div class="oc-desc">O prazo aparece automaticamente no sistema</div></div>
+      </div>
+      <div class="option-card" data-group="calc" data-val="Tabela manual" onclick="selectCard(this,'calc')">
+        <div class="oc-icon">📋</div><div><div class="oc-title">Tabela manual</div><div class="oc-desc">Consulto uma tabela que tenho comigo</div></div>
+      </div>
+      <div class="option-card" data-group="calc" data-val="Consulto transportadora" onclick="selectCard(this,'calc')">
+        <div class="oc-icon">📞</div><div><div class="oc-title">Consulto a transportadora</div><div class="oc-desc">Ligo ou acesso o site da transportadora</div></div>
+      </div>
+      <div class="option-card" data-group="calc" data-val="Estimativa própria" onclick="selectCard(this,'calc')">
+        <div class="oc-icon">🧠</div><div><div class="oc-title">Estimativa própria</div><div class="oc-desc">Uso a experiência, sem ferramenta específica</div></div>
+      </div>
+      <div class="option-card" data-group="calc" data-val="Não sei" onclick="selectCard(this,'calc')">
+        <div class="oc-icon">❓</div><div><div class="oc-title">Não sei / não tenho essa informação</div><div class="oc-desc">Não consigo informar prazo com segurança</div></div>
+      </div>
+    </div>
+    <div class="field-error" id="err-calc" style="margin-top:10px">Selecione uma opção.</div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(3)">← Voltar</button>
+      <button class="btn-next" onclick="next(3)">Próximo <span>→</span></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ETAPA 4 — DORES
+  ════════════════════════════════════ -->
+  <div class="step" id="step-4">
+    <div class="step-eyebrow">Etapa 4</div>
+    <h1 class="step-title">O que mais<br><em>atrapalha</em> sua venda?</h1>
+    <p class="step-desc">Seja direto. Quanto mais detalhe você der, mais fácil fica priorizar as melhorias certas.</p>
+
+    <div class="field" id="f-dores">
+      <label class="field-label">Principais dores na área de transportes <span class="req">*</span></label>
+      <textarea class="input" id="dores" maxlength="600" oninput="charCount(this,'cc-dores')" placeholder="Ex.: Rastreio não funciona para o Nordeste. O prazo prometido pelo ERP nunca bate com a entrega real. Cliente descobre o atraso antes de mim…"></textarea>
+      <div class="char-count" id="cc-dores">0 / 600</div>
+      <div class="field-error">Descreva ao menos uma dor.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Transportadoras com boa performance na sua região</label>
+      <div class="pills pills-compact">
+        <div class="pill" data-group="transp" data-val="ANJUN"       onclick="togglePill(this)"><span class="pill-check">✓</span> ANJUN</div>
+        <div class="pill" data-group="transp" data-val="CORREIOS"    onclick="togglePill(this)"><span class="pill-check">✓</span> CORREIOS</div>
+        <div class="pill" data-group="transp" data-val="DIÁLOGO"     onclick="togglePill(this)"><span class="pill-check">✓</span> DIÁLOGO</div>
+        <div class="pill" data-group="transp" data-val="DIASLOG"     onclick="togglePill(this)"><span class="pill-check">✓</span> DIASLOG</div>
+        <div class="pill" data-group="transp" data-val="GOL"         onclick="togglePill(this)"><span class="pill-check">✓</span> GOL</div>
+        <div class="pill" data-group="transp" data-val="J&T"         onclick="togglePill(this)"><span class="pill-check">✓</span> J&T</div>
+        <div class="pill" data-group="transp" data-val="LOG SERVIÇOS" onclick="togglePill(this)"><span class="pill-check">✓</span> LOG SERVIÇOS</div>
+        <div class="pill" data-group="transp" data-val="LOGAN"       onclick="togglePill(this)"><span class="pill-check">✓</span> LOGAN</div>
+        <div class="pill" data-group="transp" data-val="UNIX"        onclick="togglePill(this)"><span class="pill-check">✓</span> UNIX</div>
+        <div class="pill" data-group="transp" data-val="SR LOG"      onclick="togglePill(this)"><span class="pill-check">✓</span> SR LOG</div>
+        <div class="pill" data-group="transp" data-val="SP FLY"      onclick="togglePill(this)"><span class="pill-check">✓</span> SP FLY</div>
+        <div class="pill" data-group="transp" data-val="KR"          onclick="togglePill(this)"><span class="pill-check">✓</span> KR</div>
+        <div class="pill" data-group="transp" data-val="JAMEF"       onclick="togglePill(this)"><span class="pill-check">✓</span> JAMEF</div>
+        <div class="pill" data-group="transp" data-val="FAVORITA"    onclick="togglePill(this)"><span class="pill-check">✓</span> FAVORITA</div>
+        <div class="pill" data-group="transp" data-val="ATIVA"       onclick="togglePill(this)"><span class="pill-check">✓</span> ATIVA</div>
+        <div class="pill" data-group="transp" data-val="TG"          onclick="togglePill(this)"><span class="pill-check">✓</span> TG</div>
+        <div class="pill" data-group="transp" data-val="ARC"         onclick="togglePill(this)"><span class="pill-check">✓</span> ARC</div>
+        <div class="pill" data-group="transp" data-val="BRUNO"       onclick="togglePill(this)"><span class="pill-check">✓</span> BRUNO</div>
+        <div class="pill" data-group="transp" data-val="PAED"        onclick="togglePill(this)"><span class="pill-check">✓</span> PAED</div>
+        <div class="pill" data-group="transp" data-val="MATHEUS"     onclick="togglePill(this)"><span class="pill-check">✓</span> MATHEUS</div>
+        <div class="pill" data-group="transp" data-val="BINHO"       onclick="togglePill(this)"><span class="pill-check">✓</span> BINHO</div>
+        <div class="pill" data-group="transp" data-val="FAMILY"      onclick="togglePill(this)"><span class="pill-check">✓</span> FAMILY</div>
+        <div class="pill" data-group="transp" data-val="FSL"         onclick="togglePill(this)"><span class="pill-check">✓</span> FSL</div>
+        <div class="pill" data-group="transp" data-val="CIA CARGAS"  onclick="togglePill(this)"><span class="pill-check">✓</span> CIA CARGAS</div>
+        <div class="pill" data-group="transp" data-val="DIRCEU"      onclick="togglePill(this)"><span class="pill-check">✓</span> DIRCEU</div>
+        <div class="pill" data-group="transp" data-val="RODO PRIME"  onclick="togglePill(this)"><span class="pill-check">✓</span> RODO PRIME</div>
+        <div class="pill" data-group="transp" data-val="Outra"       onclick="togglePill(this)" id="pill-outra-transp"><span class="pill-check">✓</span> Outra</div>
+      </div>
+      <div class="conditional" id="cond-outra-transp" style="margin-top:10px">
+        <input class="input" type="text" id="outra-transp-text" placeholder="Nome da transportadora…">
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(4)">← Voltar</button>
+      <button class="btn-next" onclick="next(4)">Próximo <span>→</span></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ETAPA 5 — AVALIAÇÃO
+  ════════════════════════════════════ -->
+  <div class="step" id="step-5">
+    <div class="step-eyebrow">Etapa 5</div>
+    <h1 class="step-title">Avaliação <em>final.</em></h1>
+    <p class="step-desc">Três perguntas rápidas que ajudam a dimensionar o impacto real do problema.</p>
+
+    <!-- Nota 1–5 -->
+    <div class="field">
+      <label class="field-label">Como você avalia a área de transportes da Gobeaute vs o mercado? <span class="req">*</span></label>
+      <div class="stars-wrap" id="stars-wrap">
+        <button class="star-btn" data-v="1" onclick="setStar(1)" title="1 — Muito abaixo do mercado">★</button>
+        <button class="star-btn" data-v="2" onclick="setStar(2)" title="2 — Abaixo do mercado">★</button>
+        <button class="star-btn" data-v="3" onclick="setStar(3)" title="3 — No mesmo nível">★</button>
+        <button class="star-btn" data-v="4" onclick="setStar(4)" title="4 — Acima do mercado">★</button>
+        <button class="star-btn" data-v="5" onclick="setStar(5)" title="5 — Melhor que o mercado">★</button>
+      </div>
+      <div class="stars-label" id="stars-label">Toque em uma estrela para avaliar</div>
+      <div class="field-error" id="err-nota">Selecione uma nota.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Urgência -->
+    <div class="field">
+      <label class="field-label">Nível de urgência do problema <span class="req">*</span></label>
+      <div class="option-cards cols-2">
+        <div class="option-card" data-group="urgencia" data-val="Crítico" onclick="selectCard(this,'urgencia')">
+          <div class="oc-icon">🔴</div><div><div class="oc-title">Crítico</div><div class="oc-desc">Estou perdendo clientes agora</div></div>
+        </div>
+        <div class="option-card" data-group="urgencia" data-val="Alto" onclick="selectCard(this,'urgencia')">
+          <div class="oc-icon">🟡</div><div><div class="oc-title">Alto</div><div class="oc-desc">Impacta negociações com frequência</div></div>
+        </div>
+        <div class="option-card" data-group="urgencia" data-val="Médio" onclick="selectCard(this,'urgencia')">
+          <div class="oc-icon">🔵</div><div><div class="oc-title">Médio</div><div class="oc-desc">Recorrente mas controlável</div></div>
+        </div>
+        <div class="option-card" data-group="urgencia" data-val="Baixo" onclick="selectCard(this,'urgencia')">
+          <div class="oc-icon">🟢</div><div><div class="oc-title">Baixo</div><div class="oc-desc">Ajuste pontual, sem impacto grave</div></div>
+        </div>
+      </div>
+      <div class="field-error" id="err-urgencia">Selecione o nível de urgência.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Perda de clientes -->
+    <div class="field">
+      <label class="field-label">Você perdeu ou está em risco de perder clientes por causa do prazo?</label>
+      <div class="option-cards cols-3">
+        <div class="option-card" data-group="risco" data-val="Sim, já perdi" onclick="selectCard(this,'risco');toggleConditional('cond-risco',true)">
+          <div><div class="oc-title">Sim, já perdi</div></div>
+        </div>
+        <div class="option-card" data-group="risco" data-val="Sim, estou em risco" onclick="selectCard(this,'risco');toggleConditional('cond-risco',true)">
+          <div><div class="oc-title">Em risco</div></div>
+        </div>
+        <div class="option-card" data-group="risco" data-val="Não" onclick="selectCard(this,'risco');toggleConditional('cond-risco',false)">
+          <div><div class="oc-title">Não</div></div>
+        </div>
+      </div>
+      <div class="conditional" id="cond-risco">
+        <div style="margin-top:12px">
+          <label class="field-label">Valor estimado em risco (R$)</label>
+          <input class="input" type="number" id="valor-risco" placeholder="Ex.: 15000" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Frequência -->
+    <div class="field">
+      <label class="field-label">Com que frequência você enfrenta esse problema?</label>
+      <div class="option-cards cols-3">
+        <div class="option-card" data-group="freq" data-val="primeira vez" onclick="selectCard(this,'freq')">
+          <div><div class="oc-title">Primeira vez</div><div class="oc-desc">Problema pontual</div></div>
+        </div>
+        <div class="option-card" data-group="freq" data-val="às vezes" onclick="selectCard(this,'freq')">
+          <div><div class="oc-title">Às vezes</div><div class="oc-desc">Acontece mas não é regra</div></div>
+        </div>
+        <div class="option-card" data-group="freq" data-val="sempre" onclick="selectCard(this,'freq')">
+          <div><div class="oc-title">Sempre</div><div class="oc-desc">Sistemático e constante</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Detecção -->
+    <div class="field">
+      <label class="field-label">Como você fica sabendo dos atrasos?</label>
+      <div class="option-cards cols-2">
+        <div class="option-card" data-group="det" data-val="cliente reclamou" onclick="selectCard(this,'det')">
+          <div class="oc-icon">📱</div><div><div class="oc-title">Cliente me liga</div><div class="oc-desc">Antes de eu saber</div></div>
+        </div>
+        <div class="option-card" data-group="det" data-val="transportadora avisou" onclick="selectCard(this,'det')">
+          <div class="oc-icon">🚛</div><div><div class="oc-title">Transportadora avisa</div><div class="oc-desc">Proativamente</div></div>
+        </div>
+        <div class="option-card" data-group="det" data-val="eu descobri checando" onclick="selectCard(this,'det')">
+          <div class="oc-icon">🔍</div><div><div class="oc-title">Eu descubro</div><div class="oc-desc">Checando o rastreio</div></div>
+        </div>
+        <div class="option-card" data-group="det" data-val="não fico sabendo" onclick="selectCard(this,'det')">
+          <div class="oc-icon">❌</div><div><div class="oc-title">Não fico sabendo</div><div class="oc-desc">Até o cliente cancelar</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Observações finais <span style="color:var(--dim);font-size:10px">(opcional)</span></label>
+      <textarea class="input" id="obs" maxlength="400" oninput="charCount(this,'cc-obs')" placeholder="Sugestões, contexto adicional ou qualquer coisa que queira registrar…" style="min-height:80px"></textarea>
+      <div class="char-count" id="cc-obs">0 / 400</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(5)">← Voltar</button>
+      <button class="btn-next" id="btn-submit" onclick="submitForm()" style="background:var(--green);gap:10px">
+        <span>✓</span> Enviar pesquisa
+      </button>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  ↓↓↓  COLE A URL DO APPS SCRIPT WEB APP AQUI  ↓↓↓
+// ═══════════════════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhh4Z5TsrcSj_0wH0M9phzDFZStISV-sA6pE4Qfv5y8my8_60S9dySd8uLtzBLgSXd/exec";
+// Ex.: "https://script.google.com/macros/s/AKfycb.../exec"
+// ═══════════════════════════════════════════════════════════
+
+// ── STATE ──────────────────────────────────────────────────
+let cur = 1;
+let starVal = 0;
+let regionCount = 0;
+const cardSelections = {}; // { group: value }
+
+const LABELS_STAR = ["","1 — Muito abaixo do mercado","2 — Abaixo do mercado","3 — No mesmo nível","4 — Acima do mercado","5 — Melhor que o mercado"];
+
+// ── UF OPTIONS ─────────────────────────────────────────────
+const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
+const UF_NAMES = {AC:"Acre",AL:"Alagoas",AM:"Amazonas",AP:"Amapá",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MG:"Minas Gerais",MS:"Mato Grosso do Sul",MT:"Mato Grosso",PA:"Pará",PB:"Paraíba",PE:"Pernambuco",PI:"Piauí",PR:"Paraná",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RO:"Rondônia",RR:"Roraima",RS:"Rio Grande do Sul",SC:"Santa Catarina",SE:"Sergipe",SP:"São Paulo",TO:"Tocantins"};
+
+function ufOpts() {
+  return `<option value="">Selecione o estado…</option>` +
+    UFS.map(u => `<option value="${u}">${u} — ${UF_NAMES[u]}</option>`).join('');
+}
+
+// ── PROGRESS ───────────────────────────────────────────────
+function setProgress(n) {
+  document.getElementById('prog').style.width = (n / 5 * 100) + '%';
+  document.getElementById('s-cur').textContent = n;
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────
+function showStep(n, dir) {
+  const prev = document.getElementById('step-' + cur);
+  const next = document.getElementById('step-' + n);
+  if (prev) { prev.classList.remove('active', 'back'); prev.style.display = 'none'; }
+  if (next) {
+    next.style.display = 'block';
+    next.classList.remove('active', 'back');
+    void next.offsetWidth; // force reflow
+    next.classList.add(dir === 'back' ? 'back' : 'active');
+  }
+  cur = n;
+  setProgress(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function next(from) {
+  if (!validateStep(from)) return;
+  showStep(from + 1, 'forward');
+}
+
+function back(from) {
+  showStep(from - 1, 'back');
+}
+
+// ── VALIDATION ─────────────────────────────────────────────
+function validateStep(n) {
+  let ok = true;
+
+  if (n === 1) {
+    const nome = document.getElementById('nome').value.trim();
+    const marcas = getPillValues('marcas');
+    toggle('f-nome', !nome);
+    toggle('err-marcas', marcas.length === 0);
+    ok = nome && marcas.length > 0;
+  }
+  if (n === 2) {
+    const cards = document.querySelectorAll('.region-card');
+    if (cards.length === 0) { addRegion(); }
+    let allFilled = true;
+    cards.forEach(card => {
+      const uf = card.querySelector('[data-field="uf"]').value;
+      const gb = card.querySelector('[data-field="gb"]').value;
+      const conc = card.querySelector('[data-field="conc"]').value;
+      const pc = card.querySelector('[data-field="pc"]').value;
+      if (!uf || !gb || !conc || !pc) allFilled = false;
+    });
+    if (!allFilled) { showToast('Preencha UF, prazos e concorrente em todas as regiões.'); ok = false; }
+  }
+  if (n === 3) {
+    const c = cardSelections['calc'];
+    toggle('err-calc', !c);
+    ok = !!c;
+  }
+  if (n === 4) {
+    const d = document.getElementById('dores').value.trim();
+    toggle('f-dores', !d);
+    ok = !!d;
+  }
+  if (n === 5) {
+    let ok5 = true;
+    if (!starVal) { show('err-nota'); ok5 = false; } else { hide('err-nota'); }
+    if (!cardSelections['urgencia']) { show('err-urgencia'); ok5 = false; } else { hide('err-urgencia'); }
+    ok = ok5;
+  }
+  return ok;
+}
+
+function toggle(id, hasError) {
+  document.getElementById(id)?.classList.toggle('has-error', hasError);
+}
+function show(id) { const e = document.getElementById(id); if(e) e.style.display='block'; }
+function hide(id) { const e = document.getElementById(id); if(e) e.style.display='none'; }
+
+// ── PILLS ─────────────────────────────────────────────────
+function togglePill(el) {
+  el.classList.toggle('selected');
+  if (el.dataset.group === 'marcas' && el.dataset.val === 'Outra') {
+    toggleConditional('cond-outra-marca', el.classList.contains('selected'));
+  }
+  if (el.dataset.group === 'transp' && el.dataset.val === 'Outra') {
+    toggleConditional('cond-outra-transp', el.classList.contains('selected'));
+  }
+}
+function getPillValues(group) {
+  return [...document.querySelectorAll(`.pill.selected[data-group="${group}"]`)].map(p => p.dataset.val);
+}
+
+// ── OPTION CARDS ──────────────────────────────────────────
+function selectCard(el, group) {
+  document.querySelectorAll(`.option-card[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  cardSelections[group] = el.dataset.val;
+}
+
+// ── CONDITIONAL ───────────────────────────────────────────
+function toggleConditional(id, open) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open', open);
+}
+
+// ── STARS ─────────────────────────────────────────────────
+function setStar(n) {
+  starVal = n;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('lit', i < n));
+  document.getElementById('stars-label').textContent = LABELS_STAR[n];
+  hide('err-nota');
+}
+
+// ── CHAR COUNTER ─────────────────────────────────────────
+function charCount(el, counterId) {
+  const max = parseInt(el.getAttribute('maxlength')) || 9999;
+  const len = el.value.length;
+  const cc = document.getElementById(counterId);
+  if (cc) {
+    cc.textContent = `${len} / ${max}`;
+    cc.classList.toggle('warn', len > max * 0.85);
+  }
+}
+
+// ── CONCORRENTE "OUTRA" ────────────────────────────────────
+function concOutraToggle(cardId) {
+  const card = document.querySelector(`.region-card[data-id="${cardId}"]`);
+  if (!card) return;
+  const sel = card.querySelector('[data-field="conc"]');
+  const div = card.querySelector('.cond-outra-conc');
+  if (div) div.classList.toggle('open', sel.value === 'Outra');
+}
+
+// ── REGION CARDS ─────────────────────────────────────────
+function addRegion() {
+  regionCount++;
+  const id = regionCount;
+  const card = document.createElement('div');
+  card.className = 'region-card';
+  card.dataset.id = id;
+  card.innerHTML = `
+    <div class="rc-header">
+      <div class="rc-num">
+        <div class="rc-num-badge">${id}</div>
+        Região ${id}
+      </div>
+      <div class="rc-gap" id="gap-${id}">
+        <span id="gap-ico-${id}">🔴</span>
+        <span id="gap-val-${id}">+0du</span>
+      </div>
+      ${id > 1 ? `<button class="rc-remove" onclick="removeRegion(this,${id})" title="Remover">✕</button>` : '<div></div>'}
+    </div>
+    <div class="rc-body">
+      <div class="field">
+        <label class="field-label">Estado (UF) <span class="req">*</span></label>
+        <select class="input" data-field="uf" data-card="${id}" onchange="liveGap(${id})">${ufOpts()}</select>
+      </div>
+      <div class="field">
+        <label class="field-label">Marca do pedido</label>
+        <select class="input" data-field="marca">
+          <option value="">Selecione…</option>
+          <option>Gobeaute</option><option>Ápice</option><option>Aua</option><option>Barbours</option>
+          <option>By Samia</option><option>Kokeshi</option><option>Lescent</option><option>Rituária</option>
+          <option>Outra</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Prazo Gobeaute (du) <span class="req">*</span></label>
+        <input class="input" type="number" min="1" max="60" placeholder="Ex.: 8" data-field="gb" data-card="${id}" oninput="liveGap(${id})">
+      </div>
+      <div class="field">
+        <label class="field-label">CD de saída Gobeaute</label>
+        <select class="input" data-field="cd">
+          <option value="">Selecione ou não sei…</option>
+          <option>SP</option><option>MG</option><option>RJ</option><option>ES</option>
+          <option>Não sei / varia</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Concorrente comparado <span class="req">*</span></label>
+        <select class="input" data-field="conc" data-card="${id}" onchange="concOutraToggle(${id})">
+          <option value="">Selecione…</option>
+          <option>O Boticário</option><option>Natura</option><option>Avon</option>
+          <option>L'Oréal</option><option>Hinode</option><option>Jequiti</option><option>Outra</option>
+        </select>
+        <div class="conditional cond-outra-conc" style="margin-top:8px">
+          <input class="input" type="text" data-field="conc-outra" placeholder="Nome do concorrente…" style="font-size:13.5px;padding:10px 14px">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Prazo concorrente (du) <span class="req">*</span></label>
+        <input class="input" type="number" min="1" max="60" placeholder="Ex.: 4" data-field="pc" data-card="${id}" oninput="liveGap(${id})">
+      </div>
+      <div class="field full">
+        <label class="field-label">CD estimado do concorrente <span style="font-size:9px;color:var(--dim)">(opcional — se souber)</span></label>
+        <input class="input" type="text" data-field="cd-conc" placeholder="Ex.: SP, RJ, CD Nordeste…">
+      </div>
+    </div>`;
+  document.getElementById('regions-stack').appendChild(card);
+}
+
+function removeRegion(btn, id) {
+  const card = document.querySelector(`.region-card[data-id="${id}"]`);
+  if (card) {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(-8px)';
+    card.style.transition = 'all .2s ease';
+    setTimeout(() => card.remove(), 200);
+  }
+}
+
+function liveGap(cardId) {
+  const card = document.querySelector(`.region-card[data-id="${cardId}"]`);
+  if (!card) return;
+  const gb = parseInt(card.querySelector('[data-field="gb"]')?.value) || 0;
+  const pc = parseInt(card.querySelector('[data-field="pc"]')?.value) || 0;
+  const gapEl = document.getElementById('gap-' + cardId);
+  const valEl = document.getElementById('gap-val-' + cardId);
+  const icoEl = document.getElementById('gap-ico-' + cardId);
+  if (!gapEl || !gb || !pc) { gapEl?.classList.remove('show'); return; }
+  const gap = gb - pc;
+  gapEl.classList.add('show');
+  gapEl.className = 'rc-gap show ' + (gap >= 3 ? 'g-red' : gap >= 1 ? 'g-yellow' : 'g-green');
+  valEl.textContent = (gap > 0 ? '+' : '') + gap + 'du';
+  icoEl.textContent = gap >= 3 ? '🔴' : gap >= 1 ? '🟡' : '🟢';
+}
+
+function collectRegions() {
+  return [...document.querySelectorAll('.region-card')].map(card => {
+    const concSel = card.querySelector('[data-field="conc"]');
+    const concVal = concSel?.value || '';
+    const concOutra = card.querySelector('[data-field="conc-outra"]')?.value.trim() || '';
+    const finalConc = concVal === 'Outra' && concOutra ? concOutra : concVal;
+    return {
+      uf:      card.querySelector('[data-field="uf"]')?.value || '',
+      marca:   card.querySelector('[data-field="marca"]')?.value || '',
+      prazoGB: parseInt(card.querySelector('[data-field="gb"]')?.value) || 0,
+      cdSaida: card.querySelector('[data-field="cd"]')?.value || '',
+      conc:    finalConc,
+      prazoPC: parseInt(card.querySelector('[data-field="pc"]')?.value) || 0,
+      cdConc:  card.querySelector('[data-field="cd-conc"]')?.value.trim() || '',
+      gap:     (parseInt(card.querySelector('[data-field="gb"]')?.value)||0) -
+               (parseInt(card.querySelector('[data-field="pc"]')?.value)||0),
+    };
+  });
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#23262E;border:1px solid rgba(224,82,82,.4);color:#F0EDE8;padding:12px 20px;border-radius:10px;font-size:13px;z-index:300;animation:stepIn .25s ease both;max-width:320px;text-align:center`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── SUBMIT ────────────────────────────────────────────────
+async function submitForm() {
+  if (!validateStep(5)) return;
+
+  const regions = collectRegions();
+  const maxGap = regions.length ? Math.max(...regions.map(r => r.gap)) : 0;
+
+  // Resolve "Outra" em marcas
+  let marcasList = getPillValues('marcas');
+  const outraMarcaText = document.getElementById('outra-marca-text')?.value.trim();
+  if (marcasList.includes('Outra') && outraMarcaText) {
+    marcasList = [...marcasList.filter(m => m !== 'Outra'), outraMarcaText];
+  }
+
+  // Resolve "Outra" em transportadoras
+  let transpList = getPillValues('transp');
+  const outraTranspText = document.getElementById('outra-transp-text')?.value.trim();
+  if (transpList.includes('Outra') && outraTranspText) {
+    transpList = [...transpList.filter(t => t !== 'Outra'), outraTranspText];
+  }
+
+  const data = {
+    timestamp:       new Date().toISOString(),
+    nome:            document.getElementById('nome').value.trim(),
+    marcas:          marcasList.join(', '),
+    regioes:         regions,
+    calcPrazo:       cardSelections['calc'] || '',
+    dores:           document.getElementById('dores').value.trim(),
+    transportadoras: transpList.join(', '),
+    nota:            starVal,
+    urgencia:        cardSelections['urgencia'] || '',
+    risco:           cardSelections['risco'] || '',
+    valorRisco:      parseFloat(document.getElementById('valor-risco')?.value) || 0,
+    frequencia:      cardSelections['freq'] || '',
+    deteccao:        cardSelections['det'] || '',
+    observacoes:     document.getElementById('obs').value.trim(),
+    maxGap,
+  };
+
+  document.getElementById('overlay').classList.add('show');
+
+  try {
+    if (SCRIPT_URL) {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await new Promise(r => setTimeout(r, 1200)); // demo delay
+    }
+    showSuccess(data);
+  } catch (err) {
+    document.getElementById('overlay').classList.remove('show');
+    showToast('Erro ao enviar. Verifique sua conexão e tente novamente.');
+    console.error(err);
+  }
+}
+
+function showSuccess(data) {
+  document.getElementById('overlay').classList.remove('show');
+  document.querySelector('.step.active')?.classList.remove('active');
+  document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
+
+  const maxGap = data.maxGap || 0;
+  const gapLabel = maxGap >= 3 ? `<span style="color:var(--red)">+${maxGap}du 🔴</span>` : maxGap >= 1 ? `<span style="color:var(--yellow)">+${maxGap}du 🟡</span>` : `<span style="color:var(--green)">${maxGap}du 🟢</span>`;
+
+  document.getElementById('ss-body').innerHTML = `
+    <div class="ss-row"><span class="ss-label">Vendedor</span><span class="ss-val">${data.nome}</span></div>
+    <div class="ss-row"><span class="ss-label">Regiões preenchidas</span><span class="ss-val">${data.regioes.length}</span></div>
+    <div class="ss-row"><span class="ss-label">Gap máximo</span><span class="ss-val">${gapLabel}</span></div>
+    <div class="ss-row"><span class="ss-label">Urgência</span><span class="ss-val">${data.urgencia || '—'}</span></div>
+    <div class="ss-row"><span class="ss-label">Nota atribuída</span><span class="ss-val" style="color:var(--gold)">${'★'.repeat(data.nota)}${'☆'.repeat(5-data.nota)}</span></div>`;
+
+  document.getElementById('success').classList.add('show');
+  document.querySelector('.header').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  location.reload();
+}
+
+// ── INIT ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  addRegion(); // inicia com 1 região
+  if (!SCRIPT_URL) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#23262E;border:1px solid rgba(201,168,76,.35);color:#C9A84C;padding:10px 16px;border-radius:10px;font-size:12px;z-index:400;max-width:240px;line-height:1.5';
+    warn.innerHTML = '⚙️ Configure o <code style="background:rgba(201,168,76,.15);padding:1px 5px;border-radius:4px">SCRIPT_URL</code> no topo do arquivo.';
+    document.body.appendChild(warn);
+    setTimeout(() => warn.remove(), 6000);
+  }
+});
+</script>
+</body>
+</html>

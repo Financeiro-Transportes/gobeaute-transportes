@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!-- GOBEAUTE · PAINEL DE TRANSPORTES -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gobeaute · Painel de Transportes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>:root{--gold:#C9A84C;--gold-l:#E8C96A;--gold-dim:rgba(201,168,76,.12);--gold-b:rgba(201,168,76,.28);--bg:#0D0E10;--s1:#141518;--s2:#1A1C20;--s3:#22252C;--border:rgba(255,255,255,.07);--text:#F0EDE8;--muted:#7A7880;--dim:#3A3840;--red:#E05252;--yellow:#E0A832;--green:#52B788;--blue:#5294E0;--sidebar:232px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999;transition:opacity .3s}
+#loader.done{opacity:0;pointer-events:none}
+.spin{width:38px;height:38px;border:3px solid var(--s3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-family:'DM Serif Display',serif;font-size:16px;color:var(--muted)}
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar);height:100vh;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.logo-wrap{padding:24px 22px 20px;border-bottom:1px solid var(--border)}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold)}
+.logo-sub{font-size:9.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.nav-g{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:10px 12px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);transition:all .14s;user-select:none;border:1px solid transparent}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold);border-color:var(--gold-b)}
+.nav-icon{width:18px;text-align:center;font-size:14px}
+.sidebar-foot{padding:14px 18px;border-top:1px solid var(--border)}
+.live-pill{display:inline-flex;align-items:center;gap:7px;background:var(--gold-dim);border:1px solid var(--gold-b);border-radius:20px;padding:5px 11px;font-size:11px;color:var(--gold);font-weight:600}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.main{margin-left:var(--sidebar);min-height:100vh}
+.topbar{height:66px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:90}
+.topbar-l{display:flex;flex-direction:column;gap:1px}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:18px}
+.topbar-title em{color:var(--gold);font-style:normal}
+.topbar-meta{font-size:11px;color:var(--muted)}
+.topbar-meta b{color:var(--gold)}
+.topbar-r{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .14s;border:none}
+.btn-gold{background:var(--gold);color:#0D0E10}.btn-gold:hover{background:var(--gold-l)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--gold-b);color:var(--gold)}
+.refresh-pill{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);padding:5px 12px;border:1px solid var(--border);border-radius:20px}
+#cd{color:var(--gold);font-weight:700;min-width:18px;text-align:center}
+.banner{background:rgba(201,168,76,.08);border-bottom:1px solid var(--gold-b);padding:10px 28px;font-size:12.5px;color:var(--muted);display:none;align-items:center;gap:10px}
+.banner.show{display:flex}
+.alert{margin:18px 28px 0;padding:11px 16px;border-radius:10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.28);font-size:13px;display:none;align-items:center;gap:10px}
+.alert.show{display:flex}
+.alert b{color:var(--red)}
+.content{padding:20px 28px 48px}
+.tab{display:none}.tab.active{display:block}
+.heading{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:4px}
+.heading em{color:var(--gold);font-style:normal}
+.sub{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.filter-bar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:18px}
+.filter-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;align-self:flex-end;padding-bottom:2px;white-space:nowrap}
+.fg{display:flex;flex-direction:column;gap:4px}
+.flbl{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600}
+.fsel{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 28px 7px 11px;font-size:12.5px;color:var(--text);font-family:inherit;outline:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237A7880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;-webkit-appearance:none;appearance:none;transition:border-color .15s}
+.fsel:hover,.fsel:focus{border-color:var(--gold-b)}
+.fsel option{background:var(--s2)}
+.filter-clear{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--red);transition:all .15s;align-self:flex-end;display:none}
+.filter-clear.show{display:block}.filter-clear:hover{background:rgba(224,82,82,.2)}
+.fbadge{align-self:flex-end;padding:4px 10px;border-radius:20px;background:var(--gold-dim);border:1px solid var(--gold-b);font-size:11px;font-weight:700;color:var(--gold);display:none}
+.fbadge.show{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .18s}
+.kpi:hover{border-color:var(--gold-b)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
+.kpi-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:32px;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11.5px;color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700}
+.b-red{background:rgba(224,82,82,.15);color:var(--red)}.b-yellow{background:rgba(224,168,50,.15);color:var(--yellow)}.b-green{background:rgba(82,183,136,.15);color:var(--green)}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:13px;padding:22px 24px;margin-bottom:16px}
+.card-title{font-family:'DM Serif Display',serif;font-size:15.5px;margin-bottom:3px}
+.card-sub{font-size:11.5px;color:var(--muted);margin-bottom:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+canvas{max-height:255px}.chart-tall canvas{max-height:330px!important}
+.ms-stats{display:flex;gap:20px;padding:12px 0;border-top:1px solid var(--border);margin-top:12px}
+.ms-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.ms-val{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold)}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{border-bottom:1px solid var(--border)}
+thead th{padding:8px 12px;text-align:left;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--s2)}
+tbody td{padding:10px 12px;vertical-align:middle}
+.tdm{color:var(--muted);font-size:12px}
+.sem{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.sem-r{background:rgba(224,82,82,.15);color:var(--red)}.sem-y{background:rgba(224,168,50,.15);color:var(--yellow)}.sem-g{background:rgba(82,183,136,.15);color:var(--green)}
+.chip{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:700;background:var(--s3);color:var(--muted)}
+.bar-row{display:flex;flex-direction:column;gap:12px}
+.bar-meta{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+.bar-lbl{font-weight:500}.bar-cnt{color:var(--muted)}
+.bar-track{height:7px;background:var(--s3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.fill-red{background:linear-gradient(90deg,#E05252,#E07852)}.fill-gold{background:linear-gradient(90deg,var(--gold),var(--gold-l))}
+.rank-list{display:flex;flex-direction:column;gap:9px}
+.rank-item{display:flex;align-items:center;gap:11px}
+.rank-n{font-family:'DM Serif Display',serif;font-size:18px;color:var(--dim);width:24px;text-align:center;flex-shrink:0}
+.rank-n.top{color:var(--gold)}.rank-name{font-weight:600;font-size:13.5px;flex:1}.rank-cnt{font-size:13px;font-weight:700;color:var(--gold);min-width:26px;text-align:right}
+.nota-list{display:flex;flex-direction:column;gap:8px;max-width:480px}
+.nota-item{display:flex;align-items:center;gap:10px}
+.nota-n{font-size:12px;color:var(--muted);min-width:18px}.nota-stars{font-size:11px;color:var(--gold);min-width:54px}.nota-cnt{font-size:11px;color:var(--muted);min-width:28px;text-align:right}
+.depo{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.depo-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.depo-nome{font-weight:600;font-size:13.5px}.depo-text{font-size:13px;color:var(--muted);line-height:1.6}.depo-foot{margin-top:8px;font-size:10.5px;color:var(--dim)}
+.ug-c{background:rgba(224,82,82,.15);color:var(--red)}.ug-a{background:rgba(224,168,50,.15);color:var(--yellow)}.ug-m{background:rgba(82,148,224,.15);color:var(--blue)}.ug-b{background:rgba(82,183,136,.15);color:var(--green)}
+@media print{.sidebar,.topbar-r,.filter-bar,.alert,#loader,.banner{display:none!important}.main{margin-left:0}.tab{display:block!important;page-break-after:always}}</style>
+</head>
+<body>
+
+<div id="loader"><div class="spin"></div><div class="load-txt">Carregando dados…</div></div>
+<aside class="sidebar">
+  <div class="logo-wrap"><div class="logo">Gobeaute</div><div class="logo-sub">Transportes · Painel</div></div>
+  <nav class="nav">
+    <div class="nav-g">Análise</div>
+    <div class="nav-item active" onclick="goTab('visao',this)"><span class="nav-icon">◈</span> Visão Geral</div>
+    <div class="nav-item" onclick="goTab('benchmark',this)"><span class="nav-icon">⟁</span> Benchmark</div>
+    <div class="nav-item" onclick="goTab('dores',this)"><span class="nav-icon">⚡</span> Dores do Time</div>
+    <div class="nav-item" onclick="goTab('transp',this)"><span class="nav-icon">▷</span> Transportadoras</div>
+    <div class="nav-g">Dados</div>
+    <div class="nav-item" onclick="goTab('respostas',this)"><span class="nav-icon">≡</span> Respostas</div>
+  </nav>
+  <div class="sidebar-foot"><div class="live-pill"><div class="dot"></div><span id="pill-txt">— respostas</span></div></div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="topbar-title">Pesquisa de Transportes <em>2025</em></div>
+      <div class="topbar-meta">Atualizado às <b id="ts">—</b></div>
+    </div>
+    <div class="topbar-r">
+      <div class="refresh-pill">↻ próxima em <span id="cd">60</span>s</div>
+      <button class="btn btn-ghost" onclick="carregar()">Atualizar</button>
+      
+    </div>
+  </div>
+  <div class="banner" id="demo-banner"><span>⚙️</span><span>Modo demonstração. Cole o <code style="background:rgba(201,168,76,.15);padding:1px 6px;border-radius:4px">SHEET_ID</code> no início do arquivo para conectar à sua planilha.</span></div>
+  <div class="alert" id="alerta"><span>⚠</span><span id="alerta-txt"></span></div>
+  <div class="content">
+    <div class="tab active" id="tab-visao">
+      <div class="heading">Visão <em>Geral</em></div>
+      <div class="sub" id="desc-geral">Carregando…</div>
+      <div class="filter-bar">
+        <span class="filter-label">Filtrar por</span>
+        <div class="fg"><span class="flbl">Estado</span><select class="fsel" id="filt-uf" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+        <div class="fg"><span class="flbl">Empresa</span><select class="fsel" id="filt-marca" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+        <div class="fg"><span class="flbl">Transportadora</span><select class="fsel" id="filt-transp" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+        <button class="filter-clear" id="btn-limpar" onclick="limparFiltros()">✕ Limpar</button>
+        <div class="fbadge" id="fbadge"></div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Total de Respostas</div><div class="kpi-val" id="k-total" style="color:var(--gold)">—</div><div class="kpi-sub" id="k-total-s"></div></div>
+        <div class="kpi"><div class="kpi-label">Gap Máximo</div><div class="kpi-val" id="k-gap" style="color:var(--red)">—</div><div class="kpi-sub" id="k-gap-s"></div></div>
+        <div class="kpi"><div class="kpi-label">Satisfação Média</div><div class="kpi-val" id="k-nota" style="color:var(--yellow)">—</div><div class="kpi-sub" id="k-nota-s"></div></div>
+        <div class="kpi"><div class="kpi-label">Casos Críticos</div><div class="kpi-val" id="k-crit" style="color:var(--yellow)">—</div><div class="kpi-sub" id="k-crit-s"></div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Gap por Região</div><div class="card-sub">Dias úteis — Gobeaute menos concorrente</div><canvas id="cGap"></canvas></div>
+        <div class="card"><div class="card-title">Prazo Médio Comparativo</div><div class="card-sub">Gobeaute vs concorrente por região</div><canvas id="cComp"></canvas></div>
+      </div>
+      <div class="g3">
+        <div class="card"><div class="card-title">Risco de Perda</div><div class="card-sub">Clientes em risco por prazo</div><canvas id="cRisco"></canvas><div class="ms-stats"><div><div class="ms-label">Valor em risco</div><div class="ms-val" id="ms-risco">—</div></div><div><div class="ms-label">Afetados</div><div class="ms-val" id="ms-risco-n">—</div></div></div></div>
+        <div class="card"><div class="card-title">Frequência do Problema</div><div class="card-sub">Recorrência dos atrasos</div><canvas id="cFreq"></canvas></div>
+        <div class="card"><div class="card-title">Nível de Urgência</div><div class="card-sub">Autoclassificação do vendedor</div><canvas id="cUrg"></canvas></div>
+      </div>
+    </div>
+    <div class="tab" id="tab-benchmark">
+      <div class="heading">Benchmark <em>de Prazo</em></div>
+      <div class="sub">Comparativo por estado, CD de saída e concorrentes referenciados</div>
+      <div class="card chart-tall"><div class="card-title">Prazo Médio por Estado</div><div class="card-sub">Média de dias úteis reportada pelos vendedores</div><canvas id="cEst"></canvas></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Prazo Médio por CD de Saída</div><div class="card-sub">Prazo médio Gobeaute (du) por centro de distribuição</div><canvas id="cCD"></canvas></div>
+        <div class="card"><div class="card-title">Concorrentes Comparados</div><div class="card-sub">Marcas usadas como referência pelos vendedores</div><canvas id="cConc"></canvas></div>
+      </div>
+      <div class="card"><div class="card-title">Como o Prazo É Calculado</div><div class="card-sub">Método utilizado pelo time comercial</div><canvas id="cCalc"></canvas></div>
+    </div>
+    <div class="tab" id="tab-dores">
+      <div class="heading">Dores do <em>Time</em></div>
+      <div class="sub">Principais insatisfações identificadas pelo comercial nas respostas abertas</div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Ranking de Dores</div><div class="card-sub">Por frequência de menção</div><div class="bar-row" id="dores-list"></div></div>
+        <div class="card"><div class="card-title">Como os Atrasos São Descobertos</div><div class="card-sub">Canal de detecção</div><canvas id="cDet"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Avaliação — Transportes Gobeaute vs Mercado</div>
+        <div class="card-sub">Escala de 1 a 5 — distribuição das notas</div>
+        <div class="nota-list" id="notas-list"></div>
+        <div class="divider"></div>
+        <div style="display:flex;gap:32px;align-items:center"><div><div class="ms-label">Nota Média</div><div class="ms-val" id="nota-media">—</div></div><div style="font-size:12.5px;color:var(--muted)" id="nota-dist">—</div></div>
+      </div>
+      <div class="card"><div class="card-title">Depoimentos — Campo Aberto</div><div class="card-sub">Relatos com notas 1–2 ★</div><div id="depos"></div></div>
+    </div>
+    <div class="tab" id="tab-transp">
+      <div class="heading">Ranking de <em>Transportadoras</em></div>
+      <div class="sub">Indicadas pelo time como referência de boa performance na região</div>
+      <div class="card"><div class="card-title">Transportadoras Indicadas</div><div class="card-sub">Por número de menções</div><div class="rank-list" id="transp-rank"></div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Indicações por Transportadora</div><canvas id="cTransp"></canvas></div>
+        <div class="card"><div class="card-title">Melhor Opção por Região</div><div class="tbl-wrap"><table><thead><tr><th>Região</th><th>1ª Opção</th><th>Indicações</th></tr></thead><tbody id="transp-reg"></tbody></table></div></div>
+      </div>
+    </div>
+    <div class="tab" id="tab-respostas">
+      <div class="heading">Respostas <em>Completas</em></div>
+      <div class="sub">🔴 gap ≥3du · 🟡 gap 1–2du · 🟢 gap 0</div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="fb-all" onclick="filtrarTabela('all')" style="border-color:var(--gold-b);color:var(--gold)">Todos</button>
+          <button class="btn btn-ghost" id="fb-c" onclick="filtrarTabela('c')">🔴 Críticos</button>
+          <button class="btn btn-ghost" id="fb-a" onclick="filtrarTabela('a')">🟡 Alerta</button>
+          <button class="btn btn-ghost" id="fb-ok" onclick="filtrarTabela('ok')">🟢 OK</button>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Vendedor</th><th>UF</th><th>Marca</th><th>CD</th><th>Prazo GB</th><th>Concorrente</th><th>Prazo C.</th><th>Gap</th><th>Urgência</th><th>Nota</th></tr></thead>
+          <tbody id="resp-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+
+const SHEET_ID   = "1UV-bx1hyJefv7uZVuNpjpHLI90UJrVsHbU4-YBK4bR8";
+const SHEET_NAME = "Benchmark";
+
+const DEMO = [
+  {nome:"Ana Beatriz C.",uf:"AM",regiao:"Norte",marca:"Gobeaute",cd:"SP",gb:10,conc:"Natura",pc:5,gap:5,urg:"Crítico",nota:1,dores:"Rastreio inexistente. Perdemos 3 clientes este mês.",cats:"rastreio,comunicacao",transp:"ANJUN",risco:true,vr:8500,freq:"sempre",det:"cliente reclamou",calc:"Estimativa própria"},
+  {nome:"Carlos R. S.",uf:"PA",regiao:"Norte",marca:"Ápice",cd:"SP",gb:9,conc:"Boticário",pc:4,gap:5,urg:"Crítico",nota:1,dores:"Prazo de 9 dias acaba com qualquer negociação.",cats:"prazo_alto",transp:"CORREIOS",risco:true,vr:12000,freq:"sempre",det:"cliente reclamou",calc:"Não sei"},
+  {nome:"Fernanda L.",uf:"CE",regiao:"Nordeste",marca:"Aua",cd:"SP",gb:6,conc:"Avon",pc:4,gap:2,urg:"Alto",nota:2,dores:"Prazo melhora quando sai do SP, mas comunicação falha.",cats:"comunicacao,prazo_sistema",transp:"DIÁLOGO",risco:true,vr:3200,freq:"às vezes",det:"eu descobri checando",calc:"Tabela manual"},
+  {nome:"Rodrigo A.",uf:"BA",regiao:"Nordeste",marca:"Barbours",cd:"RJ",gb:8,conc:"L'Oréal",pc:5,gap:3,urg:"Crítico",nota:1,dores:"Clientes na Bahia esperam 8 dias, L'Oréal entrega em 5.",cats:"prazo_alto,prazo_sistema",transp:"DIASLOG",risco:true,vr:15000,freq:"sempre",det:"cliente reclamou",calc:"Estimativa própria"},
+  {nome:"Juliana M.",uf:"PE",regiao:"Nordeste",marca:"By Samia",cd:"ES",gb:5,conc:"Hinode",pc:4,gap:1,urg:"Médio",nota:3,dores:"Às vezes o sistema manda pelo CD errado. Prazo vira loteria.",cats:"prazo_sistema",transp:"GOL",risco:false,vr:0,freq:"às vezes",det:"eu descobri checando",calc:"Sistema ERP"},
+  {nome:"Thiago P.",uf:"GO",regiao:"Centro-Oeste",marca:"Kokeshi",cd:"SP",gb:5,conc:"Natura",pc:3,gap:2,urg:"Alto",nota:2,dores:"Falta opção de entrega expressa para grandes redes.",cats:"prazo_alto",transp:"J&T",risco:true,vr:5000,freq:"às vezes",det:"transportadora avisou",calc:"Consulto transportadora"},
+  {nome:"Mariana O.",uf:"MT",regiao:"Centro-Oeste",marca:"Lescent",cd:"SP",gb:7,conc:"Jequiti",pc:5,gap:2,urg:"Alto",nota:2,dores:"Mato Grosso esquecido. Avaria frequente na entrega.",cats:"avaria,prazo_alto",transp:"LOG SERVIÇOS",risco:true,vr:4200,freq:"às vezes",det:"cliente reclamou",calc:"Tabela manual"},
+  {nome:"Leandro F.",uf:"DF",regiao:"Centro-Oeste",marca:"Rituária",cd:"MG",gb:4,conc:"Boticário",pc:3,gap:1,urg:"Baixo",nota:4,dores:"DF ok, mas clientes premium querem D+1.",cats:"prazo_alto",transp:"LOGAN",risco:false,vr:0,freq:"primeira vez",det:"eu descobri checando",calc:"Sistema ERP"},
+  {nome:"Patricia G.",uf:"SP",regiao:"Sudeste",marca:"Gobeaute",cd:"SP",gb:2,conc:"L'Oréal",pc:2,gap:0,urg:"Baixo",nota:5,dores:"SP perfeito. Só reclamo quando CD é trocado por bug.",cats:"prazo_sistema",transp:"UNIX",risco:false,vr:0,freq:"primeira vez",det:"eu descobri checando",calc:"Sistema ERP"},
+  {nome:"Vitor S.",uf:"RJ",regiao:"Sudeste",marca:"Ápice",cd:"RJ",gb:3,conc:"Avon",pc:3,gap:0,urg:"Baixo",nota:4,dores:"RJ ok, mas logística reversa é um problema recorrente.",cats:"atendimento",transp:"SR LOG",risco:false,vr:0,freq:"às vezes",det:"cliente reclamou",calc:"Sistema ERP"},
+  {nome:"Camila A.",uf:"MG",regiao:"Sudeste",marca:"Aua",cd:"MG",gb:3,conc:"Boticário",pc:2,gap:1,urg:"Médio",nota:3,dores:"MG tem CD mas o pedido nem sempre sai de lá.",cats:"prazo_sistema",transp:"SP FLY",risco:true,vr:2000,freq:"às vezes",det:"eu descobri checando",calc:"Tabela manual"},
+  {nome:"Rafael B.",uf:"ES",regiao:"Sudeste",marca:"Barbours",cd:"ES",gb:4,conc:"Hinode",pc:3,gap:1,urg:"Médio",nota:3,dores:"ES sem cobertura adequada. Transportadora vai 3x/semana.",cats:"cobertura",transp:"KR",risco:true,vr:3500,freq:"às vezes",det:"cliente reclamou",calc:"Consulto transportadora"},
+  {nome:"Daniela C.",uf:"PR",regiao:"Sul",marca:"By Samia",cd:"MG",gb:3,conc:"Natura",pc:2,gap:1,urg:"Médio",nota:3,dores:"Sul razoável mas Natura ganha em velocidade. Interior PR ruim.",cats:"prazo_alto,cobertura",transp:"JAMEF",risco:true,vr:4500,freq:"às vezes",det:"cliente reclamou",calc:"Sistema ERP"},
+  {nome:"Eduardo L.",uf:"SC",regiao:"Sul",marca:"Kokeshi",cd:"MG",gb:4,conc:"L'Oréal",pc:2,gap:2,urg:"Alto",nota:2,dores:"SC com problemas no litoral. Gap de 2du com L'Oréal custou conta grande.",cats:"prazo_alto,cobertura",transp:"FAVORITA",risco:true,vr:8000,freq:"sempre",det:"cliente reclamou",calc:"Tabela manual"},
+  {nome:"Isabela F.",uf:"RS",regiao:"Sul",marca:"Lescent",cd:"MG",gb:5,conc:"Jequiti",pc:3,gap:2,urg:"Alto",nota:2,dores:"RS muito ruim. Taxa de avaria elevada na rota Sul.",cats:"avaria,prazo_alto",transp:"ATIVA",risco:true,vr:9000,freq:"sempre",det:"cliente reclamou",calc:"Estimativa própria"},
+  {nome:"Gustavo N.",uf:"MA",regiao:"Nordeste",marca:"Rituária",cd:"SP",gb:8,conc:"Avon",pc:5,gap:3,urg:"Crítico",nota:1,dores:"Maranhão o pior. Pedido some por dias. Rastreio não funciona.",cats:"rastreio,comunicacao",transp:"TG",risco:true,vr:6000,freq:"sempre",det:"não fico sabendo",calc:"Não sei"},
+  {nome:"Aline K.",uf:"RN",regiao:"Nordeste",marca:"Gobeaute",cd:"SP",gb:7,conc:"Hinode",pc:5,gap:2,urg:"Alto",nota:2,dores:"RN sem rastreio. Cliente descobre o atraso antes de mim.",cats:"rastreio,comunicacao",transp:"ARC",risco:true,vr:4200,freq:"às vezes",det:"cliente reclamou",calc:"Estimativa própria"},
+  {nome:"Bruno T.",uf:"TO",regiao:"Norte",marca:"Ápice",cd:"SP",gb:11,conc:"Natura",pc:6,gap:5,urg:"Crítico",nota:1,dores:"Tocantins é a pior performance. 11 dias, concorrente em 6.",cats:"prazo_alto,rastreio",transp:"BRUNO",risco:true,vr:18000,freq:"sempre",det:"cliente reclamou",calc:"Não sei"},
+];
+
+const REGIAO_MAP={AC:"Norte",AL:"Nordeste",AM:"Norte",AP:"Norte",BA:"Nordeste",CE:"Nordeste",DF:"Centro-Oeste",ES:"Sudeste",GO:"Centro-Oeste",MA:"Nordeste",MG:"Sudeste",MS:"Centro-Oeste",MT:"Centro-Oeste",PA:"Norte",PB:"Nordeste",PE:"Nordeste",PI:"Nordeste",PR:"Sul",RJ:"Sudeste",RN:"Nordeste",RO:"Norte",RR:"Norte",RS:"Sul",SC:"Sul",SE:"Nordeste",SP:"Sudeste",TO:"Norte"};
+let DADOS=[], charts={}, timerID, cdVal=60;
+
+async function fetchSheets(){
+  if(!SHEET_ID) return null;
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  const res=await fetch(url), text=await res.text();
+  const s=text.indexOf('{'), e=text.lastIndexOf('}');
+  if(s<0||e<0) return null;
+  const json=JSON.parse(text.slice(s,e+1));
+  if(!json.table||!json.table.rows) return null;
+  const cols=json.table.cols.map(c=>(c.label||'').trim());
+  return json.table.rows.filter(r=>r.c&&r.c.some(c=>c&&c.v!=null)).map(row=>{
+    const obj={};row.c.forEach((cell,i)=>{if(cols[i])obj[cols[i]]=cell?cell.v:null;});return obj;
+  });
+}
+
+function parseRow(r){
+  const gb=parseInt(r['Prazo Gobeaute'])||0, pc=parseInt(r['Prazo Concorrente'])||0;
+  const gap=parseInt(r['Gap'])||(gb-pc), uf=String(r['UF']||'');
+  return {nome:String(r['Vendedor']||'\u2014'),uf,regiao:REGIAO_MAP[uf]||String(r['Regiao']||'Outra'),marca:String(r['Marca']||''),cd:String(r['CD Saida']||''),gb,conc:String(r['Concorrente']||''),pc,gap,urg:String(r['Urgencia']||''),nota:parseInt(r['Nota'])||0,dores:String(r['Dores']||''),cats:String(r['Categorias']||''),transp:String(r['Transportadoras']||''),risco:String(r['Risco'])==='Sim',vr:parseFloat(r['Valor Risco'])||0,freq:String(r['Frequencia']||''),det:String(r['Deteccao']||''),calc:String(r['Calculo Prazo']||'')};
+}
+
+async function carregar(){
+  try{
+    const raw=await fetchSheets();
+    if(raw&&raw.length>0){DADOS=raw.map(parseRow);document.getElementById('demo-banner').classList.remove('show');}
+    else{DADOS=DEMO;if(!SHEET_ID)document.getElementById('demo-banner').classList.add('show');}
+  }catch(err){console.warn('Sheets error:',err.message);DADOS=DEMO;if(!SHEET_ID)document.getElementById('demo-banner').classList.add('show');}
+  finally{
+    document.getElementById('ts').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const l=document.getElementById('loader');l.classList.add('done');setTimeout(()=>l.style.display='none',350);
+    renderAll();
+  }
+}
+
+function iniciarTimer(){
+  clearInterval(timerID);cdVal=60;document.getElementById('cd').textContent=cdVal;
+  timerID=setInterval(()=>{cdVal--;document.getElementById('cd').textContent=cdVal;if(cdVal<=0){carregar();cdVal=60;}},1000);
+}
+
+const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+const fmtBRL=v=>'R$ '+Number(v).toLocaleString('pt-BR');
+const stars=n=>'\u2605'.repeat(Math.max(0,n))+'\u2606'.repeat(Math.max(0,5-n));
+const semCls=g=>g>=3?'sem-r':g>=1?'sem-y':'sem-g';
+const semIco=g=>g>=3?'\U0001f534':g>=1?'\U0001f7e1':'\U0001f7e2';
+const urgCls=u=>({'Crítico':'ug-c',Alto:'ug-a','Médio':'ug-m',Baixo:'ug-b'}[u]||'');
+const MULTI=['rgba(201,168,76,.8)','rgba(82,148,224,.7)','rgba(82,183,136,.7)','rgba(224,82,82,.7)','rgba(224,168,50,.7)','rgba(148,82,224,.7)','rgba(82,183,136,.5)'];
+
+function co(x){return{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#7A7880',font:{family:"'DM Sans',sans-serif",size:11},boxWidth:11,padding:13}},tooltip:{backgroundColor:'#22252C',borderColor:'rgba(201,168,76,.3)',borderWidth:1,titleColor:'#F0EDE8',bodyColor:'#7A7880',titleFont:{family:"'DM Serif Display',serif",size:13},bodyFont:{family:"'DM Sans',sans-serif",size:11},padding:10}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7A7880',font:{family:"'DM Sans',sans-serif",size:10.5}}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7A7880',font:{family:"'DM Sans',sans-serif",size:10.5}}}},...(x||{})};}
+function nos(x){const o=co(x);delete o.scales;return o;}
+function mkChart(id,cfg){if(charts[id]){try{charts[id].destroy();}catch(e){}delete charts[id];}const el=document.getElementById(id);if(!el)return;try{charts[id]=new Chart(el,cfg);}catch(e){console.warn('chart',id,e);}}
+
+function getFiltered(){
+  const u=document.getElementById('filt-uf')?.value||'',m=document.getElementById('filt-marca')?.value||'',t=document.getElementById('filt-transp')?.value||'';
+  return DADOS.filter(d=>(!u||d.uf===u)&&(!m||d.marca===m)&&(!t||(d.transp||'').split(',').map(x=>x.trim()).includes(t)));
+}
+function aplicarFiltros(){
+  const D=getFiltered();
+  const u=document.getElementById('filt-uf')?.value||'',m=document.getElementById('filt-marca')?.value||'',t=document.getElementById('filt-transp')?.value||'';
+  const n=[u,m,t].filter(Boolean).length;
+  document.getElementById('fbadge').textContent=n+' filtro'+(n!==1?'s':'');
+  document.getElementById('fbadge').classList.toggle('show',n>0);
+  document.getElementById('btn-limpar').classList.toggle('show',n>0);
+  document.getElementById('desc-geral').textContent=n===0?`Consolidado de ${DADOS.length} respondente${DADOS.length!==1?'s':''} \u00b7 ${[...new Set(DADOS.map(d=>d.regiao))].length} regi\u00f5es`:`Mostrando ${D.length} de ${DADOS.length} respondentes`;
+  renderKPIs(D);renderAlerta(D);renderVisao(D);
+}
+function limparFiltros(){['filt-uf','filt-marca','filt-transp'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});aplicarFiltros();}
+function preencherFiltros(){
+  const fill=(id,items)=>{const el=document.getElementById(id);if(!el)return;const cur=el.value;el.innerHTML='<option value="">Todos</option>'+items.map(v=>`<option${v===cur?' selected':''}>${v}</option>`).join('');};
+  fill('filt-uf',[...new Set(DADOS.map(d=>d.uf).filter(Boolean))].sort());
+  fill('filt-marca',[...new Set(DADOS.map(d=>d.marca).filter(Boolean))].sort());
+  fill('filt-transp',[...new Set(DADOS.flatMap(d=>(d.transp||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort());
+}
+
+function renderAll(){
+  if(!DADOS.length) return;
+  document.getElementById('pill-txt').textContent=DADOS.length+' respostas';
+  preencherFiltros();aplicarFiltros();
+  renderBenchmark();renderDores();renderTransportadoras();renderTabela(DADOS);
+}
+
+function renderKPIs(D){
+  if(!D||!D.length){['k-total','k-gap','k-nota','k-crit'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='0';});return;}
+  const maxG=Math.max(...D.map(d=>d.gap)),notas=D.filter(d=>d.nota>0).map(d=>d.nota),notaM=notas.length?avg(notas).toFixed(1):'—',crit=D.filter(d=>d.gap>=3).length,pior=D.find(d=>d.gap===maxG);
+  const riscoV=D.filter(d=>d.risco).reduce((s,d)=>s+d.vr,0),riscoN=D.filter(d=>d.risco).length;
+  document.getElementById('k-total').textContent=D.length;
+  document.getElementById('k-total-s').innerHTML=`Vendedores \u00b7 ${[...new Set(D.map(d=>d.regiao))].length} regi\u00f5es`;
+  document.getElementById('k-gap').textContent='+'+maxG+'du';
+  document.getElementById('k-gap-s').innerHTML=`<span class="badge b-red">${pior?.regiao||'—'}</span>`;
+  document.getElementById('k-nota').textContent=notaM+'/5';
+  document.getElementById('k-nota-s').innerHTML=notaM<3?'<span class="badge b-red">Abaixo do mercado</span>':'<span class="badge b-yellow">Regular</span>';
+  document.getElementById('k-crit').textContent=crit;
+  document.getElementById('k-crit-s').innerHTML=crit>0?`<span class="badge b-yellow">de ${D.length} amostras</span>`:'<span class="badge b-green">Nenhum cr\u00edtico</span>';
+  document.getElementById('ms-risco').textContent=fmtBRL(riscoV);
+  document.getElementById('ms-risco-n').textContent=riscoN;
+}
+function renderAlerta(D){
+  const el=document.getElementById('alerta'),txt=document.getElementById('alerta-txt'),c=D?D.filter(d=>d.gap>=3).length:0;
+  if(c>0){const regs=[...new Set(D.filter(d=>d.gap>=3).map(d=>d.regiao))].join(', ');txt.innerHTML=`<b>${c} caso${c>1?'s':''} cr\u00edtico${c>1?'s':''} com gap \u22653du</b> \u2014 ${regs}.`;el.classList.add('show');}
+  else{el.classList.remove('show');}
+}
+function renderVisao(D){
+  if(!D||!D.length) return;
+  const regs=['Norte','Nordeste','Centro-Oeste','Sudeste','Sul'];
+  const gR=regs.map(r=>{const a=D.filter(d=>d.regiao===r).map(d=>d.gap);return a.length?+avg(a).toFixed(1):null;});
+  mkChart('cGap',{type:'bar',data:{labels:regs,datasets:[{label:'Gap m\u00e9dio (du)',data:gR,backgroundColor:gR.map(g=>g==null?'transparent':g>=3?'rgba(224,82,82,.75)':g>=1?'rgba(224,168,50,.75)':'rgba(82,183,136,.7)'),borderColor:gR.map(g=>g==null?'transparent':g>=3?'#E05252':g>=1?'#E0A832':'#52B788'),borderWidth:1,borderRadius:6}]},options:{...co(),plugins:{...co().plugins,legend:{display:false}}}});
+  const gbM=regs.map(r=>{const a=D.filter(d=>d.regiao===r).map(d=>d.gb);return a.length?+avg(a).toFixed(1):null;}),ccM=regs.map(r=>{const a=D.filter(d=>d.regiao===r).map(d=>d.pc);return a.length?+avg(a).toFixed(1):null;});
+  mkChart('cComp',{type:'bar',data:{labels:regs,datasets:[{label:'Gobeaute',data:gbM,backgroundColor:'rgba(201,168,76,.8)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4},{label:'Concorrente',data:ccM,backgroundColor:'rgba(82,148,224,.65)',borderColor:'#5294E0',borderWidth:1,borderRadius:4}]},options:co()});
+  const sr=D.filter(d=>d.risco).length,pct=D.length?Math.round(sr/D.length*100):0;
+  const riscoCenterPlugin={id:'riscoCtr',afterDraw(chart){const{ctx,chartArea:{top,bottom,left,right}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#E05252';ctx.font="bold 26px 'DM Serif Display',serif";ctx.fillText(pct+'%',cx,cy-8);ctx.fillStyle='#7A7880';ctx.font="11px 'DM Sans',sans-serif";ctx.fillText('em risco',cx,cy+14);ctx.restore();}};
+  mkChart('cRisco',{type:'doughnut',data:{labels:['Em risco','Sem risco'],datasets:[{data:[sr,D.length-sr],backgroundColor:['rgba(224,82,82,.85)','rgba(25,40,30,.9)'],borderColor:['#E05252','#1A2820'],borderWidth:2,hoverOffset:6}]},options:{...nos(),cutout:'74%'},plugins:[riscoCenterPlugin]});
+  const freqOrder=['sempre','às vezes','primeira vez'];
+  const fm={};D.forEach(d=>{if(d.freq)fm[d.freq]=(fm[d.freq]||0)+1;});
+  const fL=freqOrder.filter(k=>fm[k]),fD=fL.map(k=>fm[k]||0);
+  if(fL.length)mkChart('cFreq',{type:'bar',data:{labels:fL,datasets:[{data:fD,backgroundColor:['rgba(224,82,82,.75)','rgba(224,168,50,.72)','rgba(82,183,136,.72)'],borderRadius:6,borderWidth:0}]},options:{...co({indexAxis:'y'}),plugins:{...co().plugins,legend:{display:false}}}});
+  const um={'Crítico':0,Alto:0,'Médio':0,Baixo:0};D.forEach(d=>{if(um[d.urg]!==undefined)um[d.urg]++;});
+  mkChart('cUrg',{type:'bar',data:{labels:Object.keys(um),datasets:[{data:Object.values(um),backgroundColor:['rgba(224,82,82,.78)','rgba(224,168,50,.75)','rgba(82,148,224,.68)','rgba(82,183,136,.72)'],borderRadius:6,borderWidth:0}]},options:{...co({indexAxis:'y'}),plugins:{...co().plugins,legend:{display:false}}}});
+}
+function renderBenchmark(){
+  const ufs=[...new Set(DADOS.map(d=>d.uf))].sort();
+  mkChart('cEst',{type:'bar',data:{labels:ufs,datasets:[{label:'Gobeaute',data:ufs.map(u=>{const a=DADOS.filter(d=>d.uf===u);return a.length?+avg(a.map(d=>d.gb)).toFixed(1):0;}),backgroundColor:'rgba(201,168,76,.8)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4},{label:'Concorrente',data:ufs.map(u=>{const a=DADOS.filter(d=>d.uf===u);return a.length?+avg(a.map(d=>d.pc)).toFixed(1):0;}),backgroundColor:'rgba(82,148,224,.65)',borderColor:'#5294E0',borderWidth:1,borderRadius:4}]},options:co()});
+  const cdMap={};DADOS.forEach(d=>{if(d.cd){if(!cdMap[d.cd])cdMap[d.cd]=[];cdMap[d.cd].push(d.gb);}});
+  const cdL=Object.keys(cdMap).sort(),cdA=cdL.map(cd=>+avg(cdMap[cd]).toFixed(1));
+  if(cdL.length)mkChart('cCD',{type:'bar',data:{labels:cdL,datasets:[{label:'Prazo médio (du)',data:cdA,backgroundColor:'rgba(201,168,76,.8)',borderColor:'#C9A84C',borderWidth:0,borderRadius:6}]},options:{...co(),plugins:{...co().plugins,legend:{display:false}}}});
+  const nc={};DADOS.forEach(d=>{if(d.conc)nc[d.conc]=(nc[d.conc]||0)+1;});
+  if(Object.keys(nc).length)mkChart('cConc',{type:'bar',data:{labels:Object.keys(nc),datasets:[{label:'Men\u00e7\u00f5es',data:Object.values(nc),backgroundColor:'rgba(82,148,224,.65)',borderColor:'#5294E0',borderWidth:1,borderRadius:6}]},options:{...co(),plugins:{...co().plugins,legend:{display:false}}}});
+  const lc={};DADOS.forEach(d=>{if(d.calc)lc[d.calc]=(lc[d.calc]||0)+1;});
+  if(Object.keys(lc).length)mkChart('cCalc',{type:'bar',data:{labels:Object.keys(lc),datasets:[{label:'Respostas',data:Object.values(lc),backgroundColor:'rgba(201,168,76,.75)',borderColor:'#C9A84C',borderWidth:1,borderRadius:6}]},options:{...co({indexAxis:'y'}),plugins:{...co().plugins,legend:{display:false}}}});
+}
+function renderDores(){
+  const catLabel={rastreio:'Aus\u00eancia/falha de rastreio',prazo_alto:'Prazo alto vs concorr\u00eancia',prazo_sistema:'Inconsist\u00eancia no sistema de prazo',comunicacao:'Comunica\u00e7\u00e3o sobre atrasos',avaria:'Avaria / extravio',cobertura:'Cobertura regional insuficiente',atendimento:'Atendimento / suporte'};
+  const cc={};DADOS.forEach(d=>{(d.cats||'').split(',').map(c=>c.trim()).filter(Boolean).forEach(c=>{cc[c]=(cc[c]||0)+1;});});
+  const sorted=Object.entries(cc).sort((a,b)=>b[1]-a[1]),mv=sorted[0]?.[1]||1;
+  document.getElementById('dores-list').innerHTML=sorted.map(([c,n])=>`<div><div class="bar-meta"><span class="bar-lbl">${catLabel[c]||c}</span><span class="bar-cnt">${n}</span></div><div class="bar-track"><div class="bar-fill fill-red" style="width:${(n/mv*100).toFixed(0)}%"></div></div></div>`).join('');
+  const dm={};DADOS.forEach(d=>{if(d.det)dm[d.det]=(dm[d.det]||0)+1;});
+  if(Object.keys(dm).length)mkChart('cDet',{type:'bar',data:{labels:Object.keys(dm),datasets:[{label:'Respostas',data:Object.values(dm),backgroundColor:MULTI,borderWidth:1,borderRadius:6}]},options:{...co({indexAxis:'y'}),plugins:{...co().plugins,legend:{display:false}}}});
+  const cnt={5:0,4:0,3:0,2:0,1:0};DADOS.forEach(d=>{if(d.nota>=1&&d.nota<=5)cnt[d.nota]++;});
+  const nm=avg(DADOS.filter(d=>d.nota>0).map(d=>d.nota)),tot=Object.values(cnt).reduce((a,b)=>a+b,0)||1;
+  document.getElementById('notas-list').innerHTML=[5,4,3,2,1].map(n=>`<div class="nota-item"><span class="nota-n">${n}</span><span class="nota-stars">${'\u2605'.repeat(n)}</span><div class="bar-track" style="flex:1"><div class="bar-fill fill-gold" style="width:${(cnt[n]/tot*100).toFixed(0)}%"></div></div><span class="nota-cnt">${cnt[n]}</span></div>`).join('');
+  document.getElementById('nota-media').textContent=nm.toFixed(1)+' \u2605';
+  const b=cnt[1]+cnt[2],a2=cnt[4]+cnt[5];
+  document.getElementById('nota-dist').textContent=`${Math.round(b/tot*100)}% notas 1\u20132 \u00b7 ${Math.round(cnt[3]/tot*100)}% nota 3 \u00b7 ${Math.round(a2/tot*100)}% notas 4\u20135`;
+  document.getElementById('depos').innerHTML=DADOS.filter(d=>d.nota<=2&&d.dores).slice(0,5).map(d=>`<div class="depo" style="border-left:3px solid ${d.nota<=1?'var(--red)':'var(--yellow)'}"><div class="depo-head"><span class="depo-nome">${d.nome}</span><span class="chip">${d.uf}</span><span class="sem ${semCls(d.gap)}" style="margin-left:auto">${semIco(d.gap)} +${d.gap}du</span></div><div class="depo-text">"${d.dores}"</div><div class="depo-foot">Urg\u00eancia: ${d.urg} \u00b7 Nota: <span style="color:var(--gold)">${stars(d.nota)}</span> \u00b7 ${d.freq}</div></div>`).join('');
+}
+function renderTransportadoras(){
+  const tm={};DADOS.forEach(d=>{(d.transp||'').split(',').map(t=>t.trim()).filter(Boolean).forEach(t=>{tm[t]=(tm[t]||0)+1;});});
+  const sorted=Object.entries(tm).sort((a,b)=>b[1]-a[1]),mv=sorted[0]?.[1]||1;
+  document.getElementById('transp-rank').innerHTML=sorted.map(([nome,cnt],i)=>`<div class="rank-item"><span class="rank-n ${i<3?'top':''}">${i+1}</span><span class="rank-name">${nome}</span><div class="bar-track" style="flex:2"><div class="bar-fill fill-gold" style="width:${(cnt/mv*100).toFixed(0)}%"></div></div><span class="rank-cnt">${cnt}</span></div>`).join('');
+  const tK=Object.keys(tm).slice(0,8),tV=tK.map(k=>tm[k]);
+  if(tK.length)mkChart('cTransp',{type:'bar',data:{labels:tK,datasets:[{data:tV,backgroundColor:'rgba(201,168,76,.78)',borderRadius:6,borderWidth:0}]},options:{...co({indexAxis:'y'}),plugins:{...co().plugins,legend:{display:false}}}});
+  const regs=['Norte','Nordeste','Centro-Oeste','Sudeste','Sul'];
+  document.getElementById('transp-reg').innerHTML=regs.map(reg=>{const rm={};DADOS.filter(d=>d.regiao===reg).forEach(d=>{(d.transp||'').split(',').map(t=>t.trim()).filter(Boolean).forEach(t=>{rm[t]=(rm[t]||0)+1;});});const top=Object.entries(rm).sort((a,b)=>b[1]-a[1])[0];return top?`<tr><td><strong>${reg}</strong></td><td style="color:var(--gold);font-weight:600">${top[0]}</td><td class="tdm">${top[1]}</td></tr>`:''}).join('');
+}
+function renderTabela(dados){
+  document.getElementById('resp-tbody').innerHTML=dados.map(d=>`<tr><td><strong>${d.nome}</strong></td><td><span class="chip">${d.uf}</span></td><td class="tdm">${d.marca}</td><td class="tdm">${d.cd||'\u2014'}</td><td style="color:var(--gold);font-weight:600">${d.gb}du</td><td class="tdm">${d.conc}</td><td class="tdm">${d.pc}du</td><td><span class="sem ${semCls(d.gap)}">${semIco(d.gap)} ${d.gap>0?'+':''}${d.gap}du</span></td><td><span class="sem ${urgCls(d.urg)}" style="padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700">${d.urg||'\u2014'}</span></td><td style="color:var(--gold);font-size:12px">${stars(d.nota)}</td></tr>`).join('');
+}
+function filtrarTabela(f){
+  ['all','c','a','ok'].forEach(k=>{const b=document.getElementById('fb-'+k);if(b){b.style.borderColor='';b.style.color='';}});
+  const btn=document.getElementById('fb-'+f);if(btn){btn.style.borderColor='var(--gold-b)';btn.style.color='var(--gold)';}
+  if(f==='all'){renderTabela(DADOS);return;}
+  const fn={c:d=>d.gap>=3,a:d=>d.gap>=1&&d.gap<3,ok:d=>d.gap===0};
+  renderTabela(DADOS.filter(fn[f]||(()=>true)));
+}
+function goTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');el?.classList.add('active');
+}
+window.addEventListener('DOMContentLoaded',()=>{carregar();iniciarTimer();});
+</script>
+</body>
+</html>
