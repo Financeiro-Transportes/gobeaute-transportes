@@ -169,7 +169,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
         <div class="card"><div class="card-title">Prazo Médio Comparativo</div><div class="card-sub">Gobeaute vs concorrente por região</div><canvas id="cComp"></canvas></div>
       </div>
       <div class="g3">
-        <div class="card"><div class="card-title">Risco de Perda</div><div class="card-sub">Clientes em risco por prazo</div><canvas id="cRisco"></canvas><div class="ms-stats"><div><div class="ms-label">Valor em risco</div><div class="ms-val" id="ms-risco">—</div></div><div><div class="ms-label">Afetados</div><div class="ms-val" id="ms-risco-n">—</div></div></div></div>
+        <div class="card"><div class="card-title">Impacto no Cliente</div><div class="card-sub">Clientes perdidos ou em risco por prazo</div><canvas id="cRisco"></canvas><div class="ms-stats"><div><div class="ms-label">Valor em risco / perdido</div><div class="ms-val" id="ms-risco">—</div></div><div><div class="ms-label">Afetados</div><div class="ms-val" id="ms-risco-n">—</div></div></div></div>
         <div class="card"><div class="card-title">Frequência do Problema</div><div class="card-sub">Recorrência dos atrasos</div><canvas id="cFreq"></canvas></div>
         <div class="card"><div class="card-title">Nível de Urgência</div><div class="card-sub">Autoclassificação do vendedor</div><canvas id="cUrg"></canvas></div>
       </div>
@@ -363,8 +363,8 @@ function renderVisao(D){
   const gbM=regs.map(r=>{const a=D.filter(d=>d.regiao===r).map(d=>d.gb);return a.length?+avg(a).toFixed(1):null;}),ccM=regs.map(r=>{const a=D.filter(d=>d.regiao===r).map(d=>d.pc);return a.length?+avg(a).toFixed(1):null;});
   mkChart('cComp',{type:'bar',data:{labels:regs,datasets:[{label:'Gobeaute',data:gbM,backgroundColor:'rgba(201,168,76,.8)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4},{label:'Concorrente',data:ccM,backgroundColor:'rgba(82,148,224,.65)',borderColor:'#5294E0',borderWidth:1,borderRadius:4}]},options:co()});
   const sr=D.filter(d=>d.risco).length,pct=D.length?Math.round(sr/D.length*100):0;
-  const riscoCenterPlugin={id:'riscoCtr',afterDraw(chart){const{ctx,chartArea:{top,bottom,left,right}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#E05252';ctx.font="bold 26px 'DM Serif Display',serif";ctx.fillText(pct+'%',cx,cy-8);ctx.fillStyle='#7A7880';ctx.font="11px 'DM Sans',sans-serif";ctx.fillText('em risco',cx,cy+14);ctx.restore();}};
-  mkChart('cRisco',{type:'doughnut',data:{labels:['Em risco','Sem risco'],datasets:[{data:[sr,D.length-sr],backgroundColor:['rgba(224,82,82,.85)','rgba(25,40,30,.9)'],borderColor:['#E05252','#1A2820'],borderWidth:2,hoverOffset:6}]},options:{...nos(),cutout:'74%'},plugins:[riscoCenterPlugin]});
+  const riscoCenterPlugin={id:'riscoCtr',afterDraw(chart){const{ctx,chartArea:{top,bottom,left,right}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#E05252';ctx.font="bold 26px 'DM Serif Display',serif";ctx.fillText(pct+'%',cx,cy-8);ctx.fillStyle='#7A7880';ctx.font="11px 'DM Sans',sans-serif";ctx.fillText('com impacto',cx,cy+14);ctx.restore();}};
+  mkChart('cRisco',{type:'doughnut',data:{labels:['Perdidos ou em risco','Sem impacto'],datasets:[{data:[sr,D.length-sr],backgroundColor:['rgba(224,82,82,.85)','rgba(25,40,30,.9)'],borderColor:['#E05252','#1A2820'],borderWidth:2,hoverOffset:6}]},options:{...nos(),cutout:'74%'},plugins:[riscoCenterPlugin]});
   const freqOrder=['sempre','às vezes','primeira vez'];
   const fm={};D.forEach(d=>{if(d.freq)fm[d.freq]=(fm[d.freq]||0)+1;});
   const fL=freqOrder.filter(k=>fm[k]),fD=fL.map(k=>fm[k]||0);
