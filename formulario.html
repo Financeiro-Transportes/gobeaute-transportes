@@ -991,6 +991,9 @@ function showSuccess(data) {
 }
 
 function resetForm() {
+  // Esconde tela de sucesso e restaura header
+  document.getElementById('success').classList.remove('show');
+  document.querySelector('.header').style.display = '';
   // Limpa todos os campos de texto
   document.querySelectorAll('textarea, input').forEach(el => el.value = '');
   // Desmarca pills e option cards
