@@ -273,7 +273,7 @@ async function fetchSheets(){
 function parseRow(r){
   const gb=parseInt(r['Prazo Gobeaute'])||0, pc=parseInt(r['Prazo Concorrente'])||0;
   const gap=parseInt(r['Gap'])||(gb-pc), uf=String(r['UF']||'');
-  return {nome:String(r['Vendedor']||'\u2014'),uf,regiao:REGIAO_MAP[uf]||String(r['Regiao']||'Outra'),marca:String(r['Marca']||''),cd:String(r['CD Saida']||''),gb,conc:String(r['Concorrente']||''),pc,gap,urg:String(r['Urgencia']||''),nota:parseInt(r['Nota'])||0,dores:String(r['Dores']||''),cats:String(r['Categorias']||''),transp:String(r['Transportadoras']||''),risco:String(r['Risco'])==='Sim',vr:parseFloat(r['Valor Risco'])||0,freq:String(r['Frequencia']||''),det:String(r['Deteccao']||''),calc:String(r['Calculo Prazo']||'')};
+  return {nome:String(r['Vendedor']||'\u2014'),uf,regiao:REGIAO_MAP[uf]||String(r['Regiao']||'Outra'),marca:String(r['Marca']||''),cd:String(r['CD Saida']||''),gb,conc:String(r['Concorrente']||''),pc,gap,urg:String(r['Urgencia']||''),nota:parseInt(r['Nota'])||0,dores:String(r['Dores']||''),cats:String(r['Categorias']||''),transp:String(r['Transportadora']||r['Transportadoras']||''),risco:String(r['Risco'])==='Sim',vr:parseFloat(r['Valor Risco'])||0,freq:String(r['Frequencia']||''),det:String(r['Deteccao']||''),calc:String(r['Calculo Prazo']||'')};
 }
 
 async function carregar(){
