@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <!--
   ╔═══════════════════════════════════════════════════════════╗
-  ║  GOBEAUTE · FORMULÁRIO DE TRANSPORTES                     ║
+  ║  GOBEAUTE · FORMULÁRIO DE TRANSPORTES                         ║
+  ╠═══════════════════════════════════════════════════════════╣
+  ║  CONFIGURE: cole a URL do Apps Script Web App abaixo     ║
   ╚═══════════════════════════════════════════════════════════╝
 -->
 <html lang="pt-BR">
@@ -312,7 +314,10 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
 <header class="header">
   <div class="header-row">
     <div class="logo">Gobeaute</div>
-    <div class="step-label"><b id="s-cur">1</b> de 5 etapas</div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="step-label"><b id="s-cur">1</b> de 5 etapas</div>
+      <button onclick="resetForm()" style="background:none;border:none;font-family:inherit;font-size:12px;color:var(--muted);cursor:pointer;padding:4px 0;transition:color .15s;text-decoration:underline;text-underline-offset:3px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Limpar tudo</button>
+    </div>
   </div>
   <div class="progress-track">
     <div class="progress-fill" id="prog" style="width:20%"></div>
@@ -421,6 +426,12 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
         <div class="oc-icon">❓</div><div><div class="oc-title">Não sei / não tenho essa informação</div><div class="oc-desc">Não consigo informar prazo com segurança</div></div>
       </div>
     </div>
+    <div class="conditional" id="cond-erp" style="margin-top:14px">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">Qual sistema você utiliza?</label>
+        <input class="input" type="text" id="qual-sistema" placeholder="Ex.: Protheus, TOTVS, SAP, Omie…">
+      </div>
+    </div>
     <div class="field-error" id="err-calc" style="margin-top:10px">Selecione uma opção.</div>
 
     <div class="nav-row">
@@ -442,42 +453,6 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
       <textarea class="input" id="dores" maxlength="600" oninput="charCount(this,'cc-dores')" placeholder="Ex.: Rastreio não funciona para o Nordeste. O prazo prometido pelo ERP nunca bate com a entrega real. Cliente descobre o atraso antes de mim…"></textarea>
       <div class="char-count" id="cc-dores">0 / 600</div>
       <div class="field-error">Descreva ao menos uma dor.</div>
-    </div>
-
-    <div class="field">
-      <label class="field-label">Transportadoras com boa performance na sua região</label>
-      <div class="pills pills-compact">
-        <div class="pill" data-group="transp" data-val="ANJUN"       onclick="togglePill(this)"><span class="pill-check">✓</span> ANJUN</div>
-        <div class="pill" data-group="transp" data-val="CORREIOS"    onclick="togglePill(this)"><span class="pill-check">✓</span> CORREIOS</div>
-        <div class="pill" data-group="transp" data-val="DIÁLOGO"     onclick="togglePill(this)"><span class="pill-check">✓</span> DIÁLOGO</div>
-        <div class="pill" data-group="transp" data-val="DIASLOG"     onclick="togglePill(this)"><span class="pill-check">✓</span> DIASLOG</div>
-        <div class="pill" data-group="transp" data-val="GOL"         onclick="togglePill(this)"><span class="pill-check">✓</span> GOL</div>
-        <div class="pill" data-group="transp" data-val="J&T"         onclick="togglePill(this)"><span class="pill-check">✓</span> J&T</div>
-        <div class="pill" data-group="transp" data-val="LOG SERVIÇOS" onclick="togglePill(this)"><span class="pill-check">✓</span> LOG SERVIÇOS</div>
-        <div class="pill" data-group="transp" data-val="LOGAN"       onclick="togglePill(this)"><span class="pill-check">✓</span> LOGAN</div>
-        <div class="pill" data-group="transp" data-val="UNIX"        onclick="togglePill(this)"><span class="pill-check">✓</span> UNIX</div>
-        <div class="pill" data-group="transp" data-val="SR LOG"      onclick="togglePill(this)"><span class="pill-check">✓</span> SR LOG</div>
-        <div class="pill" data-group="transp" data-val="SP FLY"      onclick="togglePill(this)"><span class="pill-check">✓</span> SP FLY</div>
-        <div class="pill" data-group="transp" data-val="KR"          onclick="togglePill(this)"><span class="pill-check">✓</span> KR</div>
-        <div class="pill" data-group="transp" data-val="JAMEF"       onclick="togglePill(this)"><span class="pill-check">✓</span> JAMEF</div>
-        <div class="pill" data-group="transp" data-val="FAVORITA"    onclick="togglePill(this)"><span class="pill-check">✓</span> FAVORITA</div>
-        <div class="pill" data-group="transp" data-val="ATIVA"       onclick="togglePill(this)"><span class="pill-check">✓</span> ATIVA</div>
-        <div class="pill" data-group="transp" data-val="TG"          onclick="togglePill(this)"><span class="pill-check">✓</span> TG</div>
-        <div class="pill" data-group="transp" data-val="ARC"         onclick="togglePill(this)"><span class="pill-check">✓</span> ARC</div>
-        <div class="pill" data-group="transp" data-val="BRUNO"       onclick="togglePill(this)"><span class="pill-check">✓</span> BRUNO</div>
-        <div class="pill" data-group="transp" data-val="PAED"        onclick="togglePill(this)"><span class="pill-check">✓</span> PAED</div>
-        <div class="pill" data-group="transp" data-val="MATHEUS"     onclick="togglePill(this)"><span class="pill-check">✓</span> MATHEUS</div>
-        <div class="pill" data-group="transp" data-val="BINHO"       onclick="togglePill(this)"><span class="pill-check">✓</span> BINHO</div>
-        <div class="pill" data-group="transp" data-val="FAMILY"      onclick="togglePill(this)"><span class="pill-check">✓</span> FAMILY</div>
-        <div class="pill" data-group="transp" data-val="FSL"         onclick="togglePill(this)"><span class="pill-check">✓</span> FSL</div>
-        <div class="pill" data-group="transp" data-val="CIA CARGAS"  onclick="togglePill(this)"><span class="pill-check">✓</span> CIA CARGAS</div>
-        <div class="pill" data-group="transp" data-val="DIRCEU"      onclick="togglePill(this)"><span class="pill-check">✓</span> DIRCEU</div>
-        <div class="pill" data-group="transp" data-val="RODO PRIME"  onclick="togglePill(this)"><span class="pill-check">✓</span> RODO PRIME</div>
-        <div class="pill" data-group="transp" data-val="Outra"       onclick="togglePill(this)" id="pill-outra-transp"><span class="pill-check">✓</span> Outra</div>
-      </div>
-      <div class="conditional" id="cond-outra-transp" style="margin-top:10px">
-        <input class="input" type="text" id="outra-transp-text" placeholder="Nome da transportadora…">
-      </div>
     </div>
 
     <div class="nav-row">
@@ -734,6 +709,7 @@ function selectCard(el, group) {
   document.querySelectorAll(`.option-card[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   cardSelections[group] = el.dataset.val;
+  if (group === 'calc') toggleConditional('cond-erp', el.dataset.val === 'Sistema ERP');
 }
 
 // ── CONDITIONAL ───────────────────────────────────────────
@@ -834,6 +810,41 @@ function addRegion() {
         <label class="field-label">CD estimado do concorrente <span style="font-size:9px;color:var(--dim)">(opcional — se souber)</span></label>
         <input class="input" type="text" data-field="cd-conc" placeholder="Ex.: SP, RJ, CD Nordeste…">
       </div>
+      <div class="field full">
+        <label class="field-label">Transportadoras com boa performance nesta região</label>
+        <div class="pills pills-compact" style="margin-top:6px">
+          <div class="pill" data-card-id="${id}" data-val="ANJUN" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> ANJUN</div>
+          <div class="pill" data-card-id="${id}" data-val="CORREIOS" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> CORREIOS</div>
+          <div class="pill" data-card-id="${id}" data-val="DIÁLOGO" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> DIÁLOGO</div>
+          <div class="pill" data-card-id="${id}" data-val="DIASLOG" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> DIASLOG</div>
+          <div class="pill" data-card-id="${id}" data-val="GOL" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> GOL</div>
+          <div class="pill" data-card-id="${id}" data-val="J&T" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> J&T</div>
+          <div class="pill" data-card-id="${id}" data-val="LOG SERVIÇOS" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> LOG SERVIÇOS</div>
+          <div class="pill" data-card-id="${id}" data-val="LOGAN" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> LOGAN</div>
+          <div class="pill" data-card-id="${id}" data-val="UNIX" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> UNIX</div>
+          <div class="pill" data-card-id="${id}" data-val="SR LOG" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> SR LOG</div>
+          <div class="pill" data-card-id="${id}" data-val="SP FLY" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> SP FLY</div>
+          <div class="pill" data-card-id="${id}" data-val="KR" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> KR</div>
+          <div class="pill" data-card-id="${id}" data-val="JAMEF" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> JAMEF</div>
+          <div class="pill" data-card-id="${id}" data-val="FAVORITA" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> FAVORITA</div>
+          <div class="pill" data-card-id="${id}" data-val="ATIVA" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> ATIVA</div>
+          <div class="pill" data-card-id="${id}" data-val="TG" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> TG</div>
+          <div class="pill" data-card-id="${id}" data-val="ARC" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> ARC</div>
+          <div class="pill" data-card-id="${id}" data-val="BRUNO" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> BRUNO</div>
+          <div class="pill" data-card-id="${id}" data-val="PAED" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> PAED</div>
+          <div class="pill" data-card-id="${id}" data-val="MATHEUS" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> MATHEUS</div>
+          <div class="pill" data-card-id="${id}" data-val="BINHO" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> BINHO</div>
+          <div class="pill" data-card-id="${id}" data-val="FAMILY" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> FAMILY</div>
+          <div class="pill" data-card-id="${id}" data-val="FSL" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> FSL</div>
+          <div class="pill" data-card-id="${id}" data-val="CIA CARGAS" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> CIA CARGAS</div>
+          <div class="pill" data-card-id="${id}" data-val="DIRCEU" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> DIRCEU</div>
+          <div class="pill" data-card-id="${id}" data-val="RODO PRIME" onclick="toggleCardPill(this)"><span class="pill-check">✓</span> RODO PRIME</div>
+          <div class="pill" data-card-id="${id}" data-val="Outra" onclick="toggleCardPill(this);toggleCardOutraTransp(this)"><span class="pill-check">✓</span> Outra</div>
+        </div>
+        <div class="conditional" id="cond-transp-outra-${id}" style="margin-top:8px">
+          <input class="input" type="text" data-field="transp-outra" placeholder="Nome da transportadora…" style="font-size:13.5px;padding:10px 14px">
+        </div>
+      </div>
     </div>`;
   document.getElementById('regions-stack').appendChild(card);
 }
@@ -870,16 +881,23 @@ function collectRegions() {
     const concVal = concSel?.value || '';
     const concOutra = card.querySelector('[data-field="conc-outra"]')?.value.trim() || '';
     const finalConc = concVal === 'Outra' && concOutra ? concOutra : concVal;
+    const outraTranspInput = card.querySelector('[data-field="transp-outra"]');
+    const outraTranspVal = outraTranspInput?.value.trim() || '';
+    const finalTransp = [...card.querySelectorAll('.pill.selected[data-card-id]')].map(p => {
+      if (p.dataset.val === 'Outra') return outraTranspVal || null;
+      return p.dataset.val;
+    }).filter(Boolean).join(', ');
     return {
-      uf:      card.querySelector('[data-field="uf"]')?.value || '',
-      marca:   card.querySelector('[data-field="marca"]')?.value || '',
-      prazoGB: parseInt(card.querySelector('[data-field="gb"]')?.value) || 0,
-      cdSaida: card.querySelector('[data-field="cd"]')?.value || '',
-      conc:    finalConc,
-      prazoPC: parseInt(card.querySelector('[data-field="pc"]')?.value) || 0,
-      cdConc:  card.querySelector('[data-field="cd-conc"]')?.value.trim() || '',
-      gap:     (parseInt(card.querySelector('[data-field="gb"]')?.value)||0) -
-               (parseInt(card.querySelector('[data-field="pc"]')?.value)||0),
+      uf:            card.querySelector('[data-field="uf"]')?.value || '',
+      marca:         card.querySelector('[data-field="marca"]')?.value || '',
+      prazoGB:       parseInt(card.querySelector('[data-field="gb"]')?.value) || 0,
+      cdSaida:       card.querySelector('[data-field="cd"]')?.value || '',
+      conc:          finalConc,
+      prazoPC:       parseInt(card.querySelector('[data-field="pc"]')?.value) || 0,
+      cdConc:        card.querySelector('[data-field="cd-conc"]')?.value.trim() || '',
+      transportadora: finalTransp,
+      gap:           (parseInt(card.querySelector('[data-field="gb"]')?.value)||0) -
+                     (parseInt(card.querySelector('[data-field="pc"]')?.value)||0),
     };
   });
 }
@@ -921,7 +939,8 @@ async function submitForm() {
     regioes:         regions,
     calcPrazo:       cardSelections['calc'] || '',
     dores:           document.getElementById('dores').value.trim(),
-    transportadoras: transpList.join(', '),
+    qualSistema:     document.getElementById('qual-sistema')?.value.trim() || '',
+    transportadoras: regions.map(r => `${r.uf}: ${r.transportadora}`).filter(x => x.includes(':')).join(' | '),
     nota:            starVal,
     urgencia:        cardSelections['urgencia'] || '',
     risco:           cardSelections['risco'] || '',
@@ -973,6 +992,22 @@ function showSuccess(data) {
 
 function resetForm() {
   location.reload();
+}
+
+// ── LIMPAR FORMULÁRIO ────────────────────────────────────
+function confirmarLimpar() {
+  if (confirm('Limpar todo o formulário e começar do zero?')) location.reload();
+}
+
+// ── PILLS POR REGIÃO ─────────────────────────────────────
+function toggleCardPill(el) {
+  el.classList.toggle('selected');
+}
+
+function toggleCardOutraTransp(el) {
+  const cardId = el.dataset.cardId;
+  const cond = document.getElementById('cond-transp-outra-' + cardId);
+  if (cond) cond.classList.toggle('open', el.classList.contains('selected'));
 }
 
 // ── INIT ─────────────────────────────────────────────────
