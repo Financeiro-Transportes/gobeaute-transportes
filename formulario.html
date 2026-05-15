@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <!--
   ╔═══════════════════════════════════════════════════════════╗
-  ║  GOBEAUTE · FORMULÁRIO DE TRANSPORTES                         ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║  CONFIGURE: cole a URL do Apps Script Web App abaixo     ║
+  ║  GOBEAUTE · FORMULÁRIO DE TRANSPORTES                     ║
   ╚═══════════════════════════════════════════════════════════╝
 -->
 <html lang="pt-BR">
@@ -536,7 +534,7 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
 
     <!-- Perda de clientes -->
     <div class="field">
-      <label class="field-label">Você perdeu ou está em risco de perder clientes por causa do prazo?</label>
+      <label class="field-label">Você perdeu ou está em risco de perder clientes por causa do prazo? <span class="req">*</span></label>
       <div class="option-cards cols-3">
         <div class="option-card" data-group="risco" data-val="Sim, já perdi" onclick="selectCard(this,'risco');toggleConditional('cond-risco',true)">
           <div><div class="oc-title">Sim, já perdi</div></div>
@@ -554,13 +552,14 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
           <input class="input" type="number" id="valor-risco" placeholder="Ex.: 15000" min="0">
         </div>
       </div>
+      <div class="field-error" id="err-risco" style="margin-top:8px">Selecione uma opção.</div>
     </div>
 
     <div class="divider"></div>
 
     <!-- Frequência -->
     <div class="field">
-      <label class="field-label">Com que frequência você enfrenta esse problema?</label>
+      <label class="field-label">Com que frequência você enfrenta esse problema? <span class="req">*</span></label>
       <div class="option-cards cols-3">
         <div class="option-card" data-group="freq" data-val="primeira vez" onclick="selectCard(this,'freq')">
           <div><div class="oc-title">Primeira vez</div><div class="oc-desc">Problema pontual</div></div>
@@ -572,13 +571,14 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
           <div><div class="oc-title">Sempre</div><div class="oc-desc">Sistemático e constante</div></div>
         </div>
       </div>
+      <div class="field-error" id="err-freq" style="margin-top:8px">Selecione uma opção.</div>
     </div>
 
     <div class="divider"></div>
 
     <!-- Detecção -->
     <div class="field">
-      <label class="field-label">Como você fica sabendo dos atrasos?</label>
+      <label class="field-label">Como você fica sabendo dos atrasos? <span class="req">*</span></label>
       <div class="option-cards cols-2">
         <div class="option-card" data-group="det" data-val="cliente reclamou" onclick="selectCard(this,'det')">
           <div class="oc-icon">📱</div><div><div class="oc-title">Cliente me liga</div><div class="oc-desc">Antes de eu saber</div></div>
@@ -593,13 +593,9 @@ textarea.input{resize:vertical;min-height:110px;line-height:1.6}
           <div class="oc-icon">❌</div><div><div class="oc-title">Não fico sabendo</div><div class="oc-desc">Até o cliente cancelar</div></div>
         </div>
       </div>
+      <div class="field-error" id="err-det" style="margin-top:8px">Selecione uma opção.</div>
     </div>
 
-    <div class="field">
-      <label class="field-label">Observações finais <span style="color:var(--dim);font-size:10px">(opcional)</span></label>
-      <textarea class="input" id="obs" maxlength="400" oninput="charCount(this,'cc-obs')" placeholder="Sugestões, contexto adicional ou qualquer coisa que queira registrar…" style="min-height:80px"></textarea>
-      <div class="char-count" id="cc-obs">0 / 400</div>
-    </div>
 
     <div class="nav-row">
       <button class="btn-back" onclick="back(5)">← Voltar</button>
@@ -705,6 +701,9 @@ function validateStep(n) {
     let ok5 = true;
     if (!starVal) { show('err-nota'); ok5 = false; } else { hide('err-nota'); }
     if (!cardSelections['urgencia']) { show('err-urgencia'); ok5 = false; } else { hide('err-urgencia'); }
+    if (!cardSelections['risco']) { show('err-risco'); ok5 = false; } else { hide('err-risco'); }
+    if (!cardSelections['freq']) { show('err-freq'); ok5 = false; } else { hide('err-freq'); }
+    if (!cardSelections['det']) { show('err-det'); ok5 = false; } else { hide('err-det'); }
     ok = ok5;
   }
   return ok;
@@ -929,7 +928,6 @@ async function submitForm() {
     valorRisco:      parseFloat(document.getElementById('valor-risco')?.value) || 0,
     frequencia:      cardSelections['freq'] || '',
     deteccao:        cardSelections['det'] || '',
-    observacoes:     document.getElementById('obs').value.trim(),
     maxGap,
   };
 
