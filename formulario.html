@@ -991,7 +991,28 @@ function showSuccess(data) {
 }
 
 function resetForm() {
-  location.reload();
+  // Limpa todos os campos de texto
+  document.querySelectorAll('textarea, input').forEach(el => el.value = '');
+  // Desmarca pills e option cards
+  document.querySelectorAll('.pill.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.option-card.selected').forEach(el => el.classList.remove('selected'));
+  // Fecha condicionais
+  document.querySelectorAll('.conditional.open').forEach(el => el.classList.remove('open'));
+  // Recria o card de região inicial
+  document.getElementById('regions-stack').innerHTML = '';
+  regionCount = 0;
+  addRegion();
+  // Reseta variáveis de estado
+  starVal = 0;
+  Object.keys(cardSelections).forEach(k => delete cardSelections[k]);
+  document.querySelectorAll('.star-btn').forEach(btn => btn.classList.remove('lit'));
+  const sl = document.getElementById('stars-label');
+  if (sl) sl.textContent = 'Toque em uma estrela para avaliar';
+  // Esconde mensagens de erro
+  document.querySelectorAll('.field-error').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.field.has-error').forEach(el => el.classList.remove('has-error'));
+  // Volta para etapa 1
+  showStep(1, 'back');
 }
 
 // ── LIMPAR FORMULÁRIO ────────────────────────────────────
